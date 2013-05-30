@@ -1,0 +1,17 @@
+Index: http.c
+===================================================================
+--- http.c	(revision 74729)
++++ http.c	(working copy)
+@@ -648,11 +648,7 @@
+ 	//roger
+     ffurl_close(old_hd);
+     if (http_open_cnx(h) < 0) {
+-        memcpy(s->buffer, old_buf, old_buf_size);
+-        s->buf_ptr = s->buffer;
+-        s->buf_end = s->buffer + old_buf_size;
+-        s->hd = old_hd;
+-        s->off = old_off;
++		av_log(h, AV_LOG_ERROR, "seek to new postion: %d[%s] failed\n", s->off, h->filename);
+         return -1;
+     }
+ /////////////////////////////////////////////////
