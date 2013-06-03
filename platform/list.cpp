@@ -4,7 +4,7 @@
  */
 #define LOG_TAG "List"
  
-#include "log_android.h"
+#include "log.h"
 #include "list.h"
 
 List::List() : m_pHead(NULL), m_pTail(NULL), m_nLength(0)

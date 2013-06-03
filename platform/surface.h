@@ -7,7 +7,7 @@
 #define SURFACE_WRAPPER_H
 
 #include <stdint.h>
-#include "libffplayer/ffplayer/errors.h"
+#include "errors.h"
 
 status_t Surface_open(void* surface);
 

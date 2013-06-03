@@ -6,16 +6,15 @@
 #include <sys/sysinfo.h>
 #include <sched.h>
 #include <sys/time.h>
-//#include <jni.h>
 
 extern "C"
 {
 #include "libavformat/avformat.h"
 }
 
-#include "libffplayer/ffplayer/cpu-features.h"
-#include "libffplayer/ffplayer/errors.h"
-#include "log_android.h"
+#include "cpu-features.h"
+#include "errors.h"
+#include "log.h"
 #include "utils.h"
 #include "autolock.h"
 #include "ffstream.h"
@@ -24,7 +23,6 @@ extern "C"
 
 #define FF_PLAYER_MIN_FRAME_COUNT_DEFAULT 150 //6s
 #define FF_PLAYER_MAX_QUEUE_SIZE_DEFAULT 1024*1024*10 //10m
-//extern JavaVM* gs_jvm;
 
 FFStream::FFStream()
 {

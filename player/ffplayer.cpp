@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <jni.h>
 
 extern "C" {
 	
@@ -23,28 +22,33 @@ extern "C" {
 } // end of extern C
 
 #define LOG_TAG "FFPlayer"
-#include "libffplayer/platform/log_android.h"
-#include "libffplayer/platform/yuv_rgb.h"
-#include "libffplayer/platform/surface.h"
-#include "include-pp/PlatformInfo.h"
+#include "log.h"
+#include "yuv_rgb.h"
+#include "surface.h"
+#include "platforminfo.h"
 #include "utils.h"
 #include "ffplayer.h"
 #include "autolock.h"
 #include "cpu-features.h"
 
 static FFPlayer* sPlayer = NULL;
+
+#ifdef OS_ANDROID
+#include <jni.h>
 PlatformInfo* gPlatformInfo = NULL;
 JavaVM* gs_jvm = NULL;
+#endif
 
 extern "C" IPlayer* getPlayer(
+#ifdef OS_ANDROID
 	JavaVM* jvm, 
 	PlatformInfo* platformInfo,
+#endif
 	bool startP2PEngine) {
-	
+#ifdef OS_ANDROID	
 	gs_jvm = jvm;
 	gPlatformInfo = platformInfo;
-	//START_P2P = startP2PEngine;
-	
+#endif
 	return new FFPlayer();
 }
 
@@ -2231,14 +2235,14 @@ int64_t FFPlayer::getFramePTS_l(AVFrame* frame)
     }
     return pts;
 }
-
+#ifdef OS_ANDROID
 status_t FFPlayer::startCompatibilityTest()
 {
     LOGD("startCompatibilityTest ffplayer");
     status_t ret = ERROR;
     AVFormatContext* movieFile = avformat_alloc_context();
     int maxLen = 300;
-    char* fileName = "lib/libsample.so";
+    const char* fileName = "lib/libsample.so";
     int32_t pathLen = strlen(gPlatformInfo->app_path)+strlen(fileName)+1;
     if(pathLen >= maxLen) return ERROR;
     char path[maxLen];
@@ -2378,7 +2382,7 @@ status_t FFPlayer::startCompatibilityTest()
     }
     return ret;
 }
-
+#endif
 bool FFPlayer::getMediaInfo(const char* url, MediaInfo* info)
 {
     if(url == NULL || info == NULL) return false;
@@ -2824,41 +2828,4 @@ bool FFPlayer::getThumbnail(const char* url, MediaInfo* info)
     LOGD("audio_channels:%d", info->audio_channels);
     LOGD("video_channels:%d", info->video_channels);
     return ret;
-}
-
-void FFPlayer::setFFmpegLogCallback(void* avcl, int level, const char* fmt, va_list vl)
-{
-    AVClass* avc = avcl ? *(AVClass**)avcl : NULL;
-    char msg[1024];
-	vsnprintf(msg, sizeof(msg), fmt, vl);
-    int32_t androidLevel = ANDROID_LOG_UNKNOWN;
-	switch(level)
-    {
-		case AV_LOG_PANIC:
-            androidLevel = ANDROID_LOG_FATAL;
-			break;
-		case AV_LOG_FATAL:
-            androidLevel = ANDROID_LOG_FATAL;
-			break;
-		case AV_LOG_ERROR:
-            androidLevel = ANDROID_LOG_ERROR;
-			break;
-		case AV_LOG_WARNING:
-            androidLevel = ANDROID_LOG_WARN;
-			break;
-			
-		case AV_LOG_INFO:
-            androidLevel = ANDROID_LOG_INFO;
-			break;
-			
-		case AV_LOG_DEBUG:
-            androidLevel = ANDROID_LOG_DEBUG;
-			break;
-
-		case AV_LOG_VERBOSE:
-            androidLevel = ANDROID_LOG_VERBOSE;
-			break;
-			
-	}
-	__android_log_print(androidLevel, "ffmpeg", "[%s]%s", avc!=NULL?avc->class_name:"", msg);
 }

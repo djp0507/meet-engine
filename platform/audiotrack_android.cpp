@@ -7,8 +7,8 @@
 
 #include <unistd.h>
 #include <dlfcn.h>
-#include "libffplayer/ffplayer/errors.h"
-#include "log_android.h"
+#include "errors.h"
+#include "log.h"
 #include "audiotrack.h"
 
 #define SIZE_OF_AUDIOTRACK 256

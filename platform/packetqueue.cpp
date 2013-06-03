@@ -12,7 +12,7 @@ extern "C" {
 	
 } // end of extern C
 
-#include "log_android.h"
+#include "log.h"
 #include "packetqueue.h"
 
 PacketQueue::PacketQueue()

@@ -10,21 +10,21 @@
 
 #define LOG_TAG "Loop"
 
-//#include "include-pp/a14/system/core/include/cutils/sched_policy.h"
-//#include <sys/prctl.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <errno.h>
-#include <jni.h>
 #include <stdint.h>
 #include <unistd.h>
 #include "autolock.h"
 #include "utils.h"
-#include "libffplayer/platform/log_android.h"
+#include "log.h"
 #include "loop.h"
 
+#ifdef OS_ANDROID
+#include <jni.h>
 extern JavaVM* gs_jvm;
+#endif
 
 Loop::Loop()
 {
@@ -171,9 +171,10 @@ void Loop::cancelEvent(event_id id) {
 // static
 void *Loop::ThreadWrapper(void *me)
 {
+#ifdef OS_ANDROID
     JNIEnv *env = NULL;
     gs_jvm->AttachCurrentThread(&env, NULL);
-
+#endif
     LOGD("getpriority before:%d", getpriority(PRIO_PROCESS, 0));
     LOGD("sched_getscheduler:%d", sched_getscheduler(0));
     int videoThreadPriority = -6;
@@ -184,7 +185,9 @@ void *Loop::ThreadWrapper(void *me)
     LOGD("getpriority after:%d", getpriority(PRIO_PROCESS, 0));
 
     static_cast<Loop *>(me)->threadEntry();
+#ifdef OS_ANDROID
     gs_jvm->DetachCurrentThread();
+#endif
     LOGD("exit thread");
     return NULL;
 }

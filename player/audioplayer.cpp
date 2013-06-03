@@ -7,7 +7,6 @@
 #include <sched.h>
 #include <sys/time.h>
 #include <unistd.h>
-//#include <jni.h>
 extern "C"
 {
 #include "libavcodec/avcodec.h"
@@ -20,13 +19,11 @@ extern "C"
 #include "utils.h"
 #include "autolock.h"
 #include "errors.h"
-#include "include-pp/IPlayer.h"
-#include "libffplayer/platform/log_android.h"
-#include "libffplayer/platform/audiotrack.h"
+#include "player.h"
+#include "log.h"
+#include "audiotrack.h"
 #include "audioplayer.h"
 
-using namespace android;
-//extern JavaVM* gs_jvm;
 
 class AudioRender
 {

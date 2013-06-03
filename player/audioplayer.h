@@ -9,11 +9,11 @@
 #include <pthread.h>
 #include <sys/types.h>
 
-#include "include-pp/IPlayer.h"
+#include "player.h"
 #include "packetqueue.h"
 #include "ffstream.h"
 
-using namespace android;
+//using namespace android;
 
 class AVStream;
 class AudioRender;

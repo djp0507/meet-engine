@@ -8,7 +8,7 @@
 #define ANDROID_AUDIOTRACK_WRAPPER_H
 
 #include <stdint.h>
-#include "libffplayer/ffplayer/errors.h"
+#include "errors.h"
 
 //From ffmpeg
 #ifndef AVUTIL_SAMPLEFMT_H

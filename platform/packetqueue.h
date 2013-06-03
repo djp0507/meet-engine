@@ -6,7 +6,7 @@
 #ifndef FF_PACKETQUEUE_H
 #define FF_PACKETQUEUE_H
 #include "list.h"
-#include "libffplayer/ffplayer/errors.h"
+#include "errors.h"
 
 class AVPacket;
 class PacketQueue

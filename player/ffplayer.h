@@ -5,19 +5,16 @@
 
 
 #ifndef FF_PLAYER_H_
-
 #define FF_PLAYER_H_
-#include <stdarg.h>
 
 #include "errors.h"
-#include "include-pp/IPlayer.h"
+#include "player.h"
 #include "loop.h"
 #include "errors.h"
 #include "audioplayer.h"
 #include "packetqueue.h"
 #include "ffstream.h"
 
-using namespace android;
 
 class AVFormatContext;
 class AVStream;
@@ -52,9 +49,10 @@ public:
 	int32_t flags();
 	bool isLooping();
     bool isPlaying();
-	
+#ifdef OS_ANDROID
 	status_t startCompatibilityTest();
 	void stopCompatibilityTest(){}
+#endif
     status_t startP2PEngine(){return OK;}
     void stopP2PEngine(){}
 	void disconnect(){}
@@ -89,7 +87,6 @@ private:
 	status_t prepareAudio_l();
 	status_t prepareVideo_l();
 	status_t decode_l(AVPacket* packet);
-    static void setFFmpegLogCallback(void* ptr, int level, const char* fmt, va_list vl);
 	bool isPacketLate_l(AVPacket* packet);
 	void optimizeDecode_l(AVPacket* packet);
 	int64_t getFramePTS_l(AVFrame* frame);

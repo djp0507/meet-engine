@@ -9,7 +9,7 @@
 #define FF_STREAM_H_
 
 #include <pthread.h>
-#include "include-pp/IPlayer.h"
+#include "player.h"
 #include "packetqueue.h"
 
 #define FFSTREAM_OK 0
@@ -26,7 +26,7 @@
 #define FFSTREAM_STOPPED 4
 
 
-using namespace android;
+//using namespace android;
 
 
 class AVFormatContext;

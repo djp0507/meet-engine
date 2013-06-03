@@ -6,8 +6,8 @@
 #define LOG_TAG "SurfaceWrapper"
 
 #include <dlfcn.h>
-#include "libffplayer/ffplayer/errors.h"
-#include "log_android.h"
+#include "errors.h"
+#include "log.h"
 #include "surface.h"
 
 #ifndef ANDROID_SYM_S_LOCK
