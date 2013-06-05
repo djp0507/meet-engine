@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <errno.h>
 
+#ifndef NULL
+#define NULL 0
+#endif
+
 
 // use this type to return error codes
 #ifdef HAVE_MS_C_RUNTIME

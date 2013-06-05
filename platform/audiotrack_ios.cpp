@@ -5,6 +5,7 @@
 
 #define LOG_TAG "AudioTrackWrapper"
 
+#include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include "errors.h"

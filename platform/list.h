@@ -6,6 +6,7 @@
 #ifndef FF_LIST_H_
 #define FF_LIST_H_
 #include <stdint.h>
+#include "errors.h"
 
 class Node
 {

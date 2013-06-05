@@ -129,7 +129,8 @@ public:
     }
 
     status_t render(AVFrame* frame)
-    {                
+    {
+#ifdef OS_ANDROID
         uint64_t cpuFeatures = android_getCpuFeatures();
         if ((cpuFeatures & ANDROID_CPU_ARM_FEATURE_NEON) != 0 &&
             (mFrameFormat == PIX_FMT_YUV420P ||
@@ -142,8 +143,12 @@ public:
         {
             return render_sws(frame);
         }
+#else
+        return render_sws(frame);
+#endif
     }
-
+    
+#ifdef OS_ANDROID
     //neon accelerate
     status_t render_neon(AVFrame* frame)
     {
@@ -228,6 +233,7 @@ public:
     	*/
         return OK;
     }
+#endif
 
     //use ffmpeg sws_scale
     status_t render_sws(AVFrame* frame)

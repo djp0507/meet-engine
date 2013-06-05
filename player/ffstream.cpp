@@ -3,7 +3,9 @@
 #include <sys/resource.h>
 #include <stdint.h>
 #include <unistd.h>
+#ifdef OS_ANDROID
 #include <sys/sysinfo.h>
+#endif
 #include <sched.h>
 #include <sys/time.h>
 
