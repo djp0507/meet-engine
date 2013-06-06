@@ -93,6 +93,9 @@ public:
         mSurfaceFrame = NULL;
         mScaleFrame = NULL;
         mScalePixels = NULL;
+#ifdef OS_IOS
+        mSurfacePixels = NULL;
+#endif
     }
     
     status_t init()
@@ -101,13 +104,14 @@ public:
         {
             return ERROR;
     	}
+#ifdef OS_ANDROID
     	if (Surface_getRes(&mSurfaceWidth, &mSurfaceHeight) != OK)
         {
             return ERROR;
     	}
 
         adjust();
-        
+#endif
         return OK;
     }
 
@@ -143,8 +147,10 @@ public:
         {
             return render_sws(frame);
         }
-#else
-        return render_sws(frame);
+#endif
+
+#ifdef OS_IOS
+        return render_opengl(frame);
 #endif
     }
     
@@ -338,6 +344,107 @@ public:
         return OK;
     }
 
+    status_t render_opengl(AVFrame* frame)
+    {
+    
+#if USE_OPENGL_ES == 1
+        if(mConvertCtx == NULL || mSurfaceFrame == NULL)
+        {
+            if(mConvertCtx != NULL)
+            {
+                sws_freeContext(mConvertCtx);
+                mConvertCtx = NULL;
+            }
+            if(mSurfaceFrame != NULL)
+            {
+                avcodec_free_frame(&mSurfaceFrame);
+            }
+            //just do color format convertion
+            //avoid doing scaling as it cost lots of cpu
+            mConvertCtx = sws_getContext(mFrameWidth,
+        								 mFrameHeight,
+        								 mFrameFormat,
+        								 mFrameWidth,
+        								 mFrameHeight,//mOptiSurfaceHeight,
+        								 PIX_FMT_RGB565,
+        								 mSwsFlags,
+        								 NULL,
+        								 NULL,
+        								 NULL);
+        	if (mConvertCtx == NULL) {
+        		LOGE("create convert ctx failed, width:%d, height:%d, pix:%d", 
+        					mFrameWidth,
+        					mFrameHeight,
+        					mFrameFormat);
+        		return ERROR;
+        	}
+
+            mSurfaceFrame = avcodec_alloc_frame();
+            if (mSurfaceFrame == NULL)
+            {
+                LOGE("alloc frame failed");
+                return ERROR;
+            }
+
+        }
+
+        if(mSurfacePixels == NULL)
+        {
+            mSurfacePixels = av_malloc(mFrameWidth*mFrameHeight*2);
+
+            int ret = avpicture_fill((AVPicture *)mSurfaceFrame,
+                                (uint8_t *)mSurfacePixels,
+                                PIX_FMT_RGB565,
+                                mFrameWidth,
+                                mFrameHeight);
+        	if(ret < 0)
+        	{
+        		LOGE("avpicture_fill failed, ret:%d", ret);
+        		return ERROR;
+        	}
+        }
+        
+        // Convert the image
+        int64_t begin_scale = getNowMs();	
+        sws_scale(mConvertCtx,
+            	      frame->data,
+            	      frame->linesize,
+                      0,
+            	      frame->height,
+            	      mSurfaceFrame->data,
+                      mSurfaceFrame->linesize);
+        
+        LOGD("before rendering frame");
+        if(Surface_displayPicture((FFPicture*)mSurfaceFrame) != OK)
+    	{
+            LOGE("Failed to render picture");
+            return ERROR;
+    	}
+        LOGD("after rendering frame");
+        
+    	int64_t end_scale = getNowMs();
+        int64_t costTime = end_scale-begin_scale;
+        if(mAveScaleTimeMs == 0)
+        {
+            mAveScaleTimeMs = costTime;
+        }
+        else
+        {
+            mAveScaleTimeMs = (mAveScaleTimeMs*4+costTime)/5;
+        }
+    	LOGD("sws scale picture cost %lld[ms]", costTime);
+    	LOGV("mAveScaleTimeMs %lld[ms]", mAveScaleTimeMs);
+
+#elif USE_OPENGL_ES == 2
+        if(Surface_displayPicture((FFPicture*)frame) != OK)
+    	{
+            LOGE("Failed to render picture");
+            return ERROR;
+    	}
+#endif
+        return OK;
+    }
+
 	~FFRender()
     {
         if(mConvertCtx != NULL)
@@ -360,6 +467,13 @@ public:
             avcodec_free_frame(&mScaleFrame);
             mScaleFrame = NULL;
         }
+#ifdef OS_IOS
+        if(mSurfacePixels != NULL)
+        {
+            av_free(mSurfacePixels);
+            mSurfacePixels = NULL;
+        }
+#endif
         
         Surface_close();
         mSurface = NULL;
@@ -436,6 +550,9 @@ private:
     uint32_t mOptiSurfaceHeight;
     int mSwsFlags;
     int64_t mAveScaleTimeMs;
+#ifdef OS_IOS
+    void* mSurfacePixels;
+#endif
 };
 
 static int getNowSec() {

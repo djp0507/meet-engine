@@ -158,7 +158,7 @@ status_t Surface_getPixels(uint32_t* width, uint32_t* height, void** pixels)
 	return OK;
 }
 
-int Surface_updateSurface(int32_t autoscale)
+status_t Surface_updateSurface(int32_t autoscale)
 {
     if(s_unlockAndPost(sSurface) != OK)
     {
