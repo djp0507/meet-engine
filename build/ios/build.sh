@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CC=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/g++
+CC=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/llvm-g++
 AR=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/ar
 LIPO=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/lipo
 CFLAGS="--sysroot=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.0.sdk -arch armv7 -DNDEBUG -DOS_IOS -Wno-deprecated-declarations"
@@ -20,7 +20,7 @@ $CC -c \
 	$PLATFORMPATH/list.cpp \
 	$PLATFORMPATH/loop.cpp \
 	$PLATFORMPATH/utils.cpp \
-	$PLATFORMPATH/audiotrack_ios.cpp \
+	$PLATFORMPATH/audiotrack_ios.c \
 	$PLATFORMPATH/surface_ios.m \
 	$PLATFORMPATH/log_ios.c \
 	$PLAYERPATH/ffstream.cpp \
