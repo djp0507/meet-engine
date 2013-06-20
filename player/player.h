@@ -1,7 +1,7 @@
 #ifndef IPLAYER_H
 #define IPLAYER_H
 
-//ÊÓÆµÃ½ÌåĞÅÏ¢
+//è§†é¢‘åª’ä½“ä¿¡æ¯
 typedef struct MediaInfo {
 	int32_t duration_ms; //in millisecond 
 	long long size_byte; //in byte
@@ -34,7 +34,7 @@ typedef struct MediaInfo {
     
 } MediaInfo;
 
-//²¥·ÅÆ÷»Øµ÷×´Ì¬·ÖÀà
+//æ’­æ”¾å™¨å›è°ƒçŠ¶æ€åˆ†ç±»
 enum media_event_type {
     MEDIA_NOP               = 0, // interface test message
     MEDIA_PREPARED          = 1,
@@ -47,7 +47,7 @@ enum media_event_type {
     MEDIA_COMPATIBILITY_TEST_COMPLETE              = 300,
 };
 
-//²¥·ÅÆ÷»Øµ÷ĞÅÏ¢ÏêÏ¸·ÖÀà
+//æ’­æ”¾å™¨å›è°ƒä¿¡æ¯è¯¦ç»†åˆ†ç±»
 enum media_info_type {
     MEDIA_INFO_UNKNOWN = 1,
     MEDIA_INFO_VIDEO_TRACK_LAGGING = 700,
@@ -60,7 +60,7 @@ enum media_info_type {
     MEDIA_INFO_METADATA_UPDATE = 802,
 };
 
-//²¥·ÅÆ÷´íÎó·ÖÀà
+//æ’­æ”¾å™¨é”™è¯¯åˆ†ç±»
 enum media_error_type {
     MEDIA_ERROR_UNKNOWN = 1,
     MEDIA_ERROR_SERVER_DIED = 100,
@@ -89,22 +89,22 @@ public:
 class IPlayer
 {
 public:
-	//²¥·ÅÆ÷³õÊ¼»¯½Ó¿Ú
+	//æ’­æ”¾å™¨åˆå§‹åŒ–æ¥å£
 	virtual status_t setDataSource(const char *url) = 0;
 	virtual status_t setVideoSurface(void* surface) = 0;
 	virtual status_t prepare() = 0;
 	virtual status_t prepareAsync() = 0;
 
-	//²¥·ÅÆ÷¿ØÖÆ½Ó¿Ú
+	//æ’­æ”¾å™¨æ§åˆ¶æ¥å£
 	virtual status_t start() = 0;
 	virtual status_t stop() = 0;
 	virtual status_t pause() = 0;
 	virtual status_t seekTo(int msec) = 0;
 
-	//²¥·ÅÆ÷×´Ì¬»Øµ÷½Ó¿Ú
+	//æ’­æ”¾å™¨çŠ¶æ€å›è°ƒæ¥å£
 	virtual status_t setListener(MediaPlayerListener* listener) = 0;
 
-	//²¥·ÅÆ÷×´Ì¬»ñÈ¡½Ó¿Ú
+	//æ’­æ”¾å™¨çŠ¶æ€è·å–æ¥å£
 	virtual status_t getVideoWidth(int *w) = 0;
 	virtual status_t getVideoHeight(int *h) = 0;
 	virtual status_t getCurrentPosition(int *msec) = 0;
@@ -116,7 +116,7 @@ public:
 	
 	virtual ~IPlayer() {}
 
-	//ÏÂÃæÊÇ²»³£ÓÃµÄ½Ó¿Ú
+	//ä¸‹é¢æ˜¯ä¸å¸¸ç”¨çš„æ¥å£
 	
 #ifdef OS_ANDROID
 	virtual status_t startCompatibilityTest() = 0;
