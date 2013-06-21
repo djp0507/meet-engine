@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CC=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/llvm-g++
-AR=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/ar
+LIBTOOL=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/libtool
 LIPO=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/lipo
 CFLAGS="--sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk -arch armv7 -DNDEBUG -DOS_IOS -Wno-deprecated-declarations"
 INCLUDES="-I../../platform -I../../player -I../../foundation/foundation"
@@ -27,8 +27,8 @@ $CC -c \
 	$PLAYERPATH/audioplayer.cpp \
 	$PLAYERPATH/ffplayer.cpp
 	
-$AR rcs \
-	$OUTPUTPATH/libplayer.a \
+$LIBTOOL \
+	-o $OUTPUTPATH/libplayer.a \
 	packetqueue.o \
 	list.o \
 	loop.o \
@@ -39,11 +39,12 @@ $AR rcs \
 	ffstream.o \
 	audioplayer.o \
 	ffplayer.o \
-	$FOUNDATIONPATH/libavformat.a \
-	$FOUNDATIONPATH/libavcodec.a \
-	$FOUNDATIONPATH/libswscale.a \
-	$FOUNDATIONPATH/libavutil.a \
-	$FOUNDATIONPATH/libswresample.a
+	-L$FOUNDATIONPATH \
+	-lavformat \
+	-lavcodec \
+	-lswscale \
+	-lavutil \
+	-lswresample
 
 
 echo "roger done"
