@@ -43,8 +43,9 @@ extern "C" IPlayer* getPlayer(
 #ifdef OS_ANDROID
 	JavaVM* jvm, 
 	PlatformInfo* platformInfo,
+	bool startP2PEngine
 #endif
-	bool startP2PEngine) {
+                              ) {
 #ifdef OS_ANDROID	
 	gs_jvm = jvm;
 	gPlatformInfo = platformInfo;

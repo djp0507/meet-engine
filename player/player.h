@@ -1,6 +1,7 @@
 #ifndef IPLAYER_H
 #define IPLAYER_H
 
+#include "errors.h"
 //视频媒体信息
 typedef struct MediaInfo {
 	int32_t duration_ms; //in millisecond 
@@ -136,5 +137,13 @@ public:
 	virtual status_t suspend() = 0;
 	virtual status_t resume() = 0;
 };
+
+extern "C" IPlayer* getPlayer(
+#ifdef OS_ANDROID
+                              JavaVM* jvm,
+                              PlatformInfo* platformInfo,
+                              bool startP2PEngine
+#endif
+                              );
 
 #endif
