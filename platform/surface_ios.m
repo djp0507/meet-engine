@@ -61,6 +61,10 @@ static inline int GetAlignedSize(int i_size)
     return i_result;
 }
 
+#if __cplusplus
+extern "C" {
+#endif
+
 status_t Surface_open(void* surface)
 {
 	if(surface == nil)
@@ -215,7 +219,11 @@ status_t Surface_close()
 
     return OK;
 }
-
+    
+    
+#if __cplusplus
+}
+#endif
 
 /*****************************************************************************
  * Our UIView object

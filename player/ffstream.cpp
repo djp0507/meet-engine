@@ -79,7 +79,7 @@ AVFormatContext* FFStream::open(char* uri)
     AutoLock autoLock(&mLock);
     if(mStatus != FFSTREAM_INITED)
         return NULL;
-    
+#ifdef OS_ANDROID
     uint64_t cpuFeatures = android_getCpuFeatures();
     if ((cpuFeatures & ANDROID_CPU_ARM_FEATURE_NEON) == 0)
     {
@@ -87,6 +87,7 @@ AVFormatContext* FFStream::open(char* uri)
         mMaxBufferSize = 1024*1024*4;
         LOGD("mMaxBufferSize:%u", mMaxBufferSize);
     }
+#endif
     
 	// Open steam
 	LOGI("open url:%s", uri);

@@ -25,7 +25,11 @@ typedef struct FFPicture {
 
 #endif
 
-status_t Surface_open(void* surface);
+#if __cplusplus
+extern "C" {
+#endif
+
+status_t Surface_open(void* surface); 
 
 status_t Surface_getRes(uint32_t* width, uint32_t* height);
 
@@ -37,5 +41,8 @@ status_t Surface_displayPicture(FFPicture* picture);
 	
 status_t Surface_close();
 
+#if __cplusplus
+}
+#endif
 #endif
 
