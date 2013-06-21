@@ -1,9 +1,9 @@
 #!/bin/bash
 
-CC=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/llvm-g++
-AR=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/ar
-LIPO=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/lipo
-CFLAGS="--sysroot=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.0.sdk -arch armv7 -DNDEBUG -DOS_IOS -Wno-deprecated-declarations"
+CC=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/llvm-g++
+AR=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/ar
+LIPO=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/lipo
+CFLAGS="--sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk -arch armv7 -DNDEBUG -DOS_IOS -Wno-deprecated-declarations"
 INCLUDES="-I../../platform -I../../player -I../../foundation/foundation"
 
 OUTPUTPATH=../../output/ios/v7
