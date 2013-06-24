@@ -112,7 +112,7 @@ status_t Surface_open(void* surface)
     glTexture[0] = 0;
 	glBuffer[0] = 0;
     glGenTextures(1, glTexture);
-    glBindTexture(GL_TEXTURE_2D, glTexture);
+    glBindTexture(GL_TEXTURE_2D, glTexture[0]);
 
     /* TODO memalign would be way better */
     glBuffer[0] = malloc(glView.texWidth * glView.texHeight * glView.texPixelSize);

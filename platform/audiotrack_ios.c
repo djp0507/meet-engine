@@ -39,7 +39,7 @@ struct oalContext
 static struct oalContext alContext;
 
 
-status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, AVSampleFormat sampleFormat)
+status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFormat sampleFormat)
 {
 	alContext.device = NULL;
 	alContext.context = NULL;

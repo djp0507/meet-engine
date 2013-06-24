@@ -89,7 +89,7 @@ enum AVSampleFormat {
 typedef status_t (*ReadCallback)(int16_t** buffer, uint32_t* buffer_size);
 
 
-status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, AVSampleFormat sampleFormat);
+status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFormat sampleFormat);
 
 status_t AudioTrack_registerCallback(ReadCallback callback);
 

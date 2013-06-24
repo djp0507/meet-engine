@@ -110,9 +110,9 @@ public:
         {
             return ERROR;
     	}
-
-        adjust();
 #endif
+        //check ios 屏幕分辨率
+        adjust();
         return OK;
     }
 
