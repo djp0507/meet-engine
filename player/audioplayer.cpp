@@ -421,6 +421,7 @@ status_t AudioPlayer::seekTo(int64_t msec)
         mPositionTimeMediaMs = msec;
         mOutputBufferingStartMs = getNowMs();
     }
+    return OK;
 }
 
 status_t AudioPlayer::start_l()

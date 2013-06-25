@@ -5,24 +5,26 @@
 
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
+#import <unistd.h>
+//#import <Foundation/NSObjCRuntime.h>
 
 #include "errors.h"
 #include "log.h"
 #include "audiotrack.h"
 
 #define kDefaultDistance 25.0
-typedef ALvoid AL_APIENTRY(*alBufferDataStaticProcPtr) (const ALint bid, ALenum format, ALvoid* data, ALsizei size, ALsizei freq);
+#define NUM_BUFFERS 3
+#define BUFFER_SIZE 10240
 
 
 struct oalContext
 {
 	ALCdevice* device;
 	ALCcontext* context;
-	ALuint buffer;
+	ALuint buffers[NUM_BUFFERS];
 	ALuint source;
 	ALenum format;
 	ALsizei freq;
-	alBufferDataStaticProcPtr write;
 /*
 	void*					data;
 	CGPoint					sourcePos;
@@ -43,7 +45,6 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 {
 	alContext.device = NULL;
 	alContext.context = NULL;
-	alContext.write = NULL;
 	
 	ALenum error;
 	
@@ -90,7 +91,7 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 			alcMakeContextCurrent(alContext.context);
 			
 			// Create some OpenAL Buffer Objects
-			alGenBuffers(1, &alContext.buffer);
+			alGenBuffers(NUM_BUFFERS, alContext.buffers);
 			if((error = alGetError()) != AL_NO_ERROR) {
 				LOGE("Error Generating Buffers: %x", error);
 				return ERROR;
@@ -103,21 +104,31 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 				LOGE("Error generating sources! %x\n", error);
 				return ERROR;
 			}
+            //alSourcei(alContext.source, AL_LOOPING, AL_FALSE);
+            //alSourcef(alContext.source, AL_SOURCE_TYPE, AL_STREAMING);
 			
 		}
 	}
 	// clear any errors
 	alGetError();
 
-	alContext.write = (alBufferDataStaticProcPtr) alcGetProcAddress(NULL, (const ALCchar*) "alBufferDataStatic");
+	//alContext.write = (alBufferDataStaticProcPtr) alcGetProcAddress(NULL, (const ALCchar*) "alBufferDataStatic");
+    
+    // Set Source Position
+	//float sourcePosAL[] = {0.0f, kDefaultDistance, 0.0f};
+	//alSourcefv(alContext.source, AL_POSITION, sourcePosAL);
+    
+	// Set Source Reference Distance
+	//alSourcef(alContext.source, AL_REFERENCE_DISTANCE, 50.0f);
 
 	// attach OpenAL Buffer to OpenAL Source
-	alSourcei(alContext.source, AL_BUFFER, alContext.buffer);
-	if((error = alGetError()) != AL_NO_ERROR)
-	{
-		LOGE("Error attaching buffer to source: %x\n", error);
-		return ERROR;
-	}
+	//alSourcei(alContext.source, AL_BUFFER, alContext.buffer);
+	//if((error = alGetError()) != AL_NO_ERROR)
+	//{
+	//	LOGE("Error attaching buffer to source: %x\n", error);
+    //    NSLog(@"Error attaching buffer to source: %x\n", error);
+	//	return ERROR;
+	//}
 	
 	return OK;
 }
@@ -130,13 +141,15 @@ status_t AudioTrack_start()
 	alSourcePlay(alContext.source);
 	if((error = alGetError()) != AL_NO_ERROR) {
 		LOGE("error starting source: %x\n", error);
+        //NSLog(@"error starting source: %x\n", error);
 	}
+
     return OK;
 }
 
 status_t AudioTrack_resume()
 {
-    return OK;
+    return AudioTrack_start();
 }
 
 status_t AudioTrack_flush()
@@ -152,6 +165,7 @@ status_t AudioTrack_stop()
 	alSourceStop(alContext.source);
 	if((error = alGetError()) != AL_NO_ERROR) {
 		LOGE("error stopping source: %x\n", error);
+		//NSLog(@"error stopping source: %x\n", error);
 	} 
     return OK;
 }
@@ -171,33 +185,106 @@ status_t AudioTrack_pause()
 int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
 {
 	ALenum error;
-	if(alContext.write != NULL)
-	{
-		alContext.write(alContext.buffer,
-			alContext.format,
-			(ALvoid*)buffer,
-			(ALsizei)buffer_size,
-			alContext.freq);
+    
+    ALint state;
+    alGetSourcei(alContext.source, AL_SOURCE_STATE, &state);
+    if (state == AL_INITIAL)
+    {
+        ALint queued;
+        alGetSourcei(alContext.source,
+                     AL_BUFFERS_QUEUED,
+                     &queued);
+        if (queued == NUM_BUFFERS)
+        {
+            alSourcePlay(alContext.source);
+            error = alGetError();
+            if (error != AL_NO_ERROR)
+            {
+                //NSLog(@"error playing data: %x\n", error);
+                return 0;
+            }
+            return buffer_size;
+        }
+        else if (queued < NUM_BUFFERS && queued >= 0)
+        {
+            alBufferData(alContext.buffers[queued],
+                         alContext.format,
+                         buffer,
+                         buffer_size,
+                         alContext.freq);
+            error = alGetError();
+            if (error != AL_NO_ERROR)
+            {
+                //NSLog(@"error loading buffer data: %x\n", error);
+                return 0;
+            }
+            
+            alSourceQueueBuffers(alContext.source, 1, &(alContext.buffers[queued]));
+            error = alGetError();
+            if (error != AL_NO_ERROR)
+            {
+                //NSLog(@"error queue buffer data: %x\n", error);
+                return 0;
+            }
+            return buffer_size;
+        }
+        else
+        {
+            //NSLog(@"invalid buffer index: %d\n", queued);
+            return 0;
+        }
 
-		error = alGetError();
-		if(error == AL_OUT_OF_MEMORY)
-		{
-			LOGE("There is not enough memory available to create this buffer: %x\n", error);
-		}
-		else if(error == AL_INVALID_VALUE)
-		{
-			LOGE("The size parameter is not valid for the format specified, the buffer is in use, or the data is a NULL pointer: %x\n", error);
-		} 
-		else if(error == AL_INVALID_ENUM)
-		{
-			LOGE("The specified format does not exist: %x\n", error);
-		} 
-		else
-		{
-			return buffer_size;
-		}
-	}
-	return 0;
+    }
+    else if (state != AL_PAUSED)
+    {
+        while (state != AL_PAUSED)
+        {
+            ALint processed;
+            alGetSourcei(alContext.source,
+                         AL_BUFFERS_PROCESSED,
+                         &processed);
+            if (processed > 0)
+            {
+                ALuint bufferUnqueued;
+                alSourceUnqueueBuffers(alContext.source,
+                                       1,
+                                       &bufferUnqueued);
+                
+                error = alGetError();
+                if (error != AL_NO_ERROR)
+                {
+                    //NSLog(@"error unqueue buffer data: %x\n", error);
+                    return 0;
+                }
+                
+                //TODO:check buffer_size range
+                alBufferData(bufferUnqueued,
+                             alContext.format,
+                             buffer,
+                             buffer_size,
+                             alContext.freq);
+                
+                error = alGetError();
+                if (error != AL_NO_ERROR)
+                {
+                    //NSLog(@"error queue buffer data: %x\n", error);
+                    return 0;
+                }
+                
+                alSourceQueueBuffers(alContext.source, 1, &bufferUnqueued);
+                
+                alGetSourcei(alContext.source, AL_SOURCE_STATE, &state);
+                if(state != AL_PLAYING)
+                {
+                    alSourcePlay(alContext.source);
+                }
+                return buffer_size;
+            }
+            usleep(1000ll);//1ms
+        }
+    }
+    
+    return 0;
 }
 
 uint32_t AudioTrack_getLatency()
@@ -210,11 +297,12 @@ status_t AudioTrack_close()
 	// Delete the Sources
     alDeleteSources(1, &alContext.source);
 	// Delete the Buffers
-    alDeleteBuffers(1, &alContext.buffer);
+    alDeleteBuffers(NUM_BUFFERS, alContext.buffers);
 
 	if(alContext.context != NULL)
 	{
 	    //Release context
+        alcMakeContextCurrent(NULL);
 	    alcDestroyContext(alContext.context);
 	}
 	if(alContext.device != NULL)
