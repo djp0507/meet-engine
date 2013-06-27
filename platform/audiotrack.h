@@ -10,6 +10,10 @@
 #include <stdint.h>
 #include "errors.h"
 
+#if __cplusplus
+extern "C" {
+#endif
+    
 //From ffmpeg
 #ifndef AVUTIL_SAMPLEFMT_H
 enum AVSampleFormat {
@@ -111,4 +115,8 @@ uint32_t AudioTrack_getLatency();
 
 status_t AudioTrack_close();
 
+#if __cplusplus
+}
+#endif
+        
 #endif

@@ -35,12 +35,6 @@ struct SurfaceWrapper
 
 struct SurfaceWrapper surfaceWrapper;
 
-
-#if __cplusplus
-extern "C" {
-#endif
-    
-
 status_t Surface_open(void* surface, uint32_t frameWidth, uint32_t frameHeight, uint32_t frameFormat)
 {
     if (surface == nil) {
@@ -80,8 +74,3 @@ status_t Surface_close()
     [(id)surfaceWrapper.container performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
     return OK;
 }
-    
-    
-#if __cplusplus
-}
-#endif

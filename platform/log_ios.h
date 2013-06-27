@@ -31,7 +31,14 @@
 
 #define LOGE(...) ((void)0)
 
+#if __cplusplus
+extern "C" {
+#endif
+    
 void setFFmpegLogCallback(void* avcl, int level, const char* fmt, va_list vl);
 
+#if __cplusplus
+}
+#endif
 
 #endif
