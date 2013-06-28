@@ -287,24 +287,38 @@ static void mat4f_LoadOrtho(float left, float right, float bottom, float top, fl
     _uniformSamplers[2] = glGetUniformLocation(program, "s_texture_v");
 }
 
+
+static NSData * copyFrameData(UInt8 *src, int linesize, int width, int height)
+{
+    width = MIN(linesize, width);
+    NSMutableData *md = [NSMutableData dataWithLength: width * height];
+    Byte *dst = md.mutableBytes;
+    for (NSUInteger i = 0; i < height; ++i) {
+        memcpy(dst, src, width);
+        dst += width;
+        src += linesize;
+    }
+    return md;
+}
+
 - (void) setFrame: (void *) frame
 {
     AVFrame *yuvFrame = (AVFrame *)frame;
     
-    //assert(yuvFrame->linesize[0] == yuvFrame.width * yuvFrame.height);
-    //assert(yuvFrame->linesize[1] == (yuvFrame.width * yuvFrame.height) / 4);
-    //assert(yuvFrame->linesize[2] == (yuvFrame.width * yuvFrame.height) / 4);
-
     const NSUInteger frameWidth = yuvFrame->width;
     const NSUInteger frameHeight = yuvFrame->height;
+    
+    NSData *y = copyFrameData(yuvFrame->data[0], yuvFrame->linesize[0], frameWidth, frameHeight);
+    NSData *u = copyFrameData(yuvFrame->data[1], yuvFrame->linesize[1], frameWidth / 2, frameHeight / 2);
+    NSData *v = copyFrameData(yuvFrame->data[2], yuvFrame->linesize[2], frameWidth / 2, frameHeight / 2);
     
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     
     if (0 == _textures[0])
         glGenTextures(3, _textures);
 
-    const UInt8 *pixels[3] = { yuvFrame->data[0], yuvFrame->data[1], yuvFrame->data[2] };
-    const NSUInteger widths[3]  = { yuvFrame->linesize[0], yuvFrame->linesize[1], yuvFrame->linesize[2] };
+    const UInt8 *pixels[3] = {y.bytes, u.bytes, v.bytes };
+    const NSUInteger widths[3]  = { frameWidth, frameWidth / 2, frameWidth / 2 };
     const NSUInteger heights[3] = { frameHeight, frameHeight / 2, frameHeight / 2 };
     
     int i = 0;
@@ -389,7 +403,6 @@ enum {
     self = [super initWithFrame:frame];
     if (self) {
         
-        //_decoder = decoder;
         _frameWidth = width;
         _frameHeight = height;
         _frameFormat = format;
@@ -468,12 +481,11 @@ enum {
 
 - (void)layoutSubviews
 {
-    //Do nothing.
-    /*
     glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
     [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
 	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_backingWidth);
     glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_backingHeight);
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _renderbuffer);
 	
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -486,7 +498,6 @@ enum {
     }    
     [self updateVertices];
     [self render: nil];
-     */
 }
 
 - (void)setContentMode:(UIViewContentMode)contentMode
@@ -554,8 +565,8 @@ exit:
 - (void)updateVertices
 {
     const BOOL fit      = (self.contentMode == UIViewContentModeScaleAspectFit);
-    const float width   = _frameWidth;//_decoder.frameWidth;
-    const float height  = _frameHeight;//_decoder.frameHeight;
+    const float width   = _frameWidth;
+    const float height  = _frameHeight;
     const float dH      = (float)_backingHeight / height;
     const float dW      = (float)_backingWidth	  / width;
     const float dd      = fit ? MIN(dH, dW) : MAX(dH, dW);
