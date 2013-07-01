@@ -623,7 +623,7 @@ exit:
         }
     #endif
         
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);        
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
     
     glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
