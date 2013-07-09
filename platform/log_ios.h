@@ -6,7 +6,8 @@
 #ifndef FF_IOS_LOG_H
 #define FF_IOS_LOG_H
 
-#include <stdarg.h>
+#import <stdarg.h>
+#import <stdio.h>
 
 #ifdef NDEBUG
 #define LOG_NDEBUG 1
@@ -18,23 +19,24 @@
 #if LOG_NDEBUG
 #define LOGV(...) ((void)0)
 #else
-#define LOGV(...)((void)0)
+#define LOGV(...) __ios_log(__VA_ARGS__)
 #endif
 
 #if LOG_NDEBUG
 #define LOGD(...) ((void)0)
 #else
-#define LOGD(...)((void)0)
+#define LOGD(...) __ios_log(__VA_ARGS__)
 #endif
 
-#define LOGI(...) ((void)0)
+#define LOGI(...) __ios_log(__VA_ARGS__)
 
-#define LOGE(...) ((void)0)
+#define LOGE(...) __ios_log(__VA_ARGS__)
 
 #if __cplusplus
 extern "C" {
 #endif
-    
+
+void __ios_log(const char *fmt, ...);
 void setFFmpegLogCallback(void* avcl, int level, const char* fmt, va_list vl);
 
 #if __cplusplus

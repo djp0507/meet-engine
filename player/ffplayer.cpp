@@ -350,7 +350,8 @@ public:
 
     status_t render_opengl(AVFrame* frame)
     {
-    
+        int64_t begin_scale = getNowMs();
+        
         if (mFrameFormat == PIX_FMT_YUV420P || mFrameFormat == PIX_FMT_YUVJ420P)
         {
             if(Surface_displayPicture(frame) != OK)
@@ -364,6 +365,20 @@ public:
             //TODO
             LOGE("picture format unsupported");
         }
+        
+    	int64_t end_scale = getNowMs();
+        int64_t costTime = end_scale-begin_scale;
+        if(mAveScaleTimeMs == 0)
+        {
+            mAveScaleTimeMs = costTime;
+        }
+        else
+        {
+            mAveScaleTimeMs = (mAveScaleTimeMs*4+costTime)/5;
+        }
+    	LOGD("opengl scale picture cost %lld[ms]", costTime);
+    	LOGV("mAveScaleTimeMs %lld[ms]", mAveScaleTimeMs);
+        
         return OK;
     }
 

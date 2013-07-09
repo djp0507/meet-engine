@@ -174,9 +174,9 @@ void *Loop::ThreadWrapper(void *me)
 #ifdef OS_ANDROID
     JNIEnv *env = NULL;
     gs_jvm->AttachCurrentThread(&env, NULL);
-#endif
     LOGD("getpriority before:%d", getpriority(PRIO_PROCESS, 0));
     LOGD("sched_getscheduler:%d", sched_getscheduler(0));
+#endif
     int videoThreadPriority = -6;
     if(setpriority(PRIO_PROCESS, 0, videoThreadPriority) != 0)
     {
