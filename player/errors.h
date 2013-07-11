@@ -6,7 +6,6 @@
 
 #ifndef FF_ERRORS_H
 #define FF_ERRORS_H
-#define ANDROID_ERRORS_H
 
 #include <sys/types.h>
 #include <errno.h>
@@ -15,26 +14,11 @@
 #define NULL 0
 #endif
 
-
-// use this type to return error codes
-#ifdef HAVE_MS_C_RUNTIME
-typedef int         status_t;
-#else
-typedef int32_t     status_t;
-#endif
-
-/* the MS C runtime lacks a few error codes */
-
+typedef int32_t status_t;
 /*
  * Error codes. 
  * All error codes are negative values.
  */
-
-// Win32 #defines NO_ERROR as well.  It has the same value, so there's no
-// real conflict, though it's a bit awkward.
-#ifdef _WIN32
-# undef NO_ERROR
-#endif
  
 enum {
     OK					= 0,    // Everything's swell.
@@ -74,13 +58,4 @@ enum {
 	READ_PACKET_UNAVAILABLE,
 };
 
-// Restore define; enumeration is in "android" namespace, so the value defined
-// there won't work for Win32 code in a different namespace.
-#ifdef _WIN32
-# define NO_ERROR 0L
-#endif
-
-    
-// ---------------------------------------------------------------------------
-    
 #endif // FF_ERRORS_H

@@ -138,12 +138,6 @@ public:
 	virtual status_t resume() = 0;
 };
 
-extern "C" IPlayer* getPlayer(
-#ifdef OS_ANDROID
-                              JavaVM* jvm,
-                              PlatformInfo* platformInfo,
-                              bool startP2PEngine
-#endif
-                              );
+extern "C" IPlayer* getPlayer(void* context);
 
 #endif

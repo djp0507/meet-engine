@@ -3,7 +3,7 @@
 
 #define STRLEN 200
 
-//namespace android {
+namespace android {
 
 typedef struct PlatformInfo {
     
@@ -17,7 +17,7 @@ typedef struct PlatformInfo {
     int sdk_version;
 
     void* ppbox;
-        
+    void* jvm;
 
     PlatformInfo() 
     {
@@ -41,10 +41,18 @@ typedef struct PlatformInfo {
         bzero(app_path, STRLEN);
         bzero(ppbox_lib_name, STRLEN);
         sdk_version = 0;
+
+        if (ppbox != NULL) 
+        {
+            delete ppbox;
+            ppbox = NULL;
+        }
     }
 
 } PlatformInfo;
 
-//}
+extern PlatformInfo* gPlatformInfo;
+
+}
 
 #endif

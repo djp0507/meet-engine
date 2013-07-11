@@ -25,7 +25,6 @@ extern "C" {
 #include "log.h"
 #include "yuv_rgb.h"
 #include "surface.h"
-#include "platforminfo.h"
 #include "utils.h"
 #include "ffplayer.h"
 #include "autolock.h"
@@ -35,20 +34,15 @@ static FFPlayer* sPlayer = NULL;
 
 #ifdef OS_ANDROID
 #include <jni.h>
-PlatformInfo* gPlatformInfo = NULL;
+#include "platforminfo.h"
 JavaVM* gs_jvm = NULL;
 #endif
 
-extern "C" IPlayer* getPlayer(
+extern "C" IPlayer* getPlayer(void* context)
+{
 #ifdef OS_ANDROID
-	JavaVM* jvm, 
-	PlatformInfo* platformInfo,
-	bool startP2PEngine
-#endif
-                              ) {
-#ifdef OS_ANDROID	
-	gs_jvm = jvm;
-	gPlatformInfo = platformInfo;
+    android::PlatformInfo* platformInfo = (android::PlatformInfo*)context;
+	gs_jvm = (JavaVM*)(platformInfo->jvm);
 #endif
 	return new FFPlayer();
 }
@@ -2285,11 +2279,11 @@ status_t FFPlayer::startCompatibilityTest()
     AVFormatContext* movieFile = avformat_alloc_context();
     int maxLen = 300;
     const char* fileName = "lib/libsample.so";
-    int32_t pathLen = strlen(gPlatformInfo->app_path)+strlen(fileName)+1;
+    int32_t pathLen = strlen("/data/data/com.pplive.androidphone")+strlen(fileName)+1;
     if(pathLen >= maxLen) return ERROR;
     char path[maxLen];
     memset(path, 0, maxLen);
-    strcat(path, gPlatformInfo->app_path);
+    strcat(path, "/data/data/com.pplive.androidphone");
     strcat(path, fileName);
     LOGD("path:%s", path);
     if(!avformat_open_input(&movieFile, path, NULL, NULL))
