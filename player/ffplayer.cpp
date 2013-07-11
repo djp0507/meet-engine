@@ -2065,7 +2065,7 @@ bool FFPlayer::isPacketLate_l(AVPacket* packet)
                     return true;
                 }
             }
-            else if(mDiscardLevel == AVDISCARD_BIDIR && mDiscardCount > 0)
+            else if(0)//mDiscardLevel == AVDISCARD_BIDIR && mDiscardCount > 0)
             {
                 uint8_t* pVCL = pNAL+1;
                 int32_t sizeVCL = sizeNAL-1;
@@ -2086,7 +2086,7 @@ bool FFPlayer::isPacketLate_l(AVPacket* packet)
                     return true;
                 }
             }
-            else if(mDiscardLevel == AVDISCARD_NONKEY && mDiscardCount > 0)
+            else if(0)//mDiscardLevel == AVDISCARD_NONKEY && mDiscardCount > 0)
             {
                 uint8_t* pVCL = pNAL+1;
                 int32_t sizeVCL = sizeNAL-1;
@@ -2236,7 +2236,7 @@ void FFPlayer::optimizeDecode_l(AVPacket* packet)
         {
             mVideoStream->codec->skip_loop_filter = AVDISCARD_ALL;
         }
-        mVideoStream->codec->skip_frame = mDiscardLevel;
+        mVideoStream->codec->skip_frame = AVDISCARD_DEFAULT;//mDiscardLevel;
         LOGD("notify ffmpeg to do more optimization. mDiscardLevel:%d, mDiscardCount:%d,", mDiscardLevel, mDiscardCount);
     }
     else
