@@ -3,8 +3,6 @@
 
 #define STRLEN 200
 
-namespace android {
-
 typedef struct PlatformInfo {
     
     char release_version[STRLEN];
@@ -18,41 +16,7 @@ typedef struct PlatformInfo {
 
     void* ppbox;
     void* jvm;
-
-    PlatformInfo() 
-    {
-        bzero(release_version, STRLEN);
-        bzero(model_name, STRLEN);
-        bzero(chip_name, STRLEN);
-        bzero(manufacture_name, STRLEN);
-        bzero(app_path, STRLEN);
-        bzero(ppbox_lib_name, STRLEN);
-        sdk_version = 0;
-
-        ppbox = NULL;
-    }
-
-    ~PlatformInfo() 
-    {
-        bzero(release_version, STRLEN);
-        bzero(model_name, STRLEN);
-        bzero(chip_name, STRLEN);
-        bzero(manufacture_name, STRLEN);
-        bzero(app_path, STRLEN);
-        bzero(ppbox_lib_name, STRLEN);
-        sdk_version = 0;
-
-        if (ppbox != NULL) 
-        {
-            delete ppbox;
-            ppbox = NULL;
-        }
-    }
-
 } PlatformInfo;
 
-extern PlatformInfo* gPlatformInfo;
-
-}
 
 #endif

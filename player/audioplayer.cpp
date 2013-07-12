@@ -33,6 +33,11 @@ public:
         mSamplesSize = AVCODEC_MAX_AUDIO_FRAME_SIZE*2;
         mSamples = NULL;
         mConvertCtx = NULL;
+        
+        //we assume android/ios devices have two speakers.
+        //todo: need to support devices which have more speakers.
+        mDeviceChannelLayoutOutput = AV_CH_LAYOUT_STEREO;
+        mDeviceChannels = 2;
     }
     
     ~AudioRender()
@@ -72,11 +77,12 @@ public:
         mChannelLayoutOutput = mChannelLayout;
         mChannelsOutput = mChannels;
     
-        if((mSampleFormat < AV_SAMPLE_FMT_U8 ||
-            mSampleFormat > AV_SAMPLE_FMT_S16) ||
-            mSampleRate < 4000 ||
-            mSampleRate > 48000 ||
-            mChannelLayout > 4)
+        if((mSampleFormatOutput < AV_SAMPLE_FMT_U8 ||
+            mSampleFormatOutput > AV_SAMPLE_FMT_S16) ||
+            mSampleRateOutput < 4000 ||
+            mSampleRateOutput > 48000 ||
+            mChannelsOutput > mDeviceChannels ||
+            mChannelsOutput < 1)
         {
             if(mSamples == NULL)
             {
@@ -137,12 +143,12 @@ public:
                 }
                 LOGD("mSampleRateOutput:%d", mSampleRateOutput);
 
-                if(mChannelLayoutOutput > AV_CH_LAYOUT_MONO)
+                if(mChannelsOutput > mDeviceChannels)
                 {
-                    mChannelLayoutOutput = AV_CH_LAYOUT_STEREO;
-                    mChannelsOutput = 2;
+                    mChannelLayoutOutput = mDeviceChannelLayoutOutput;
+                    mChannelsOutput = mDeviceChannels;
                 }
-                else if(mChannelLayoutOutput < AV_CH_LAYOUT_STEREO)
+                else if(mChannelsOutput < 1)
                 {
                     mChannelLayoutOutput = AV_CH_LAYOUT_MONO;
                     mChannelsOutput = 1;
@@ -214,6 +220,8 @@ private:
     uint64_t mChannelLayoutOutput;
     int mChannels;
     int mChannelsOutput;
+    int mDeviceChannels;
+    int mDeviceChannelLayoutOutput;
     AVSampleFormat mSampleFormat;
     AVSampleFormat mSampleFormatOutput;
     uint32_t mFormatSize;
@@ -307,8 +315,39 @@ status_t AudioPlayer::prepare()
         LOGD("channels:%d", mAudioContext->codec->channels);
         LOGD("sample format:%d", mAudioContext->codec->sample_fmt);
         mRender = new AudioRender();
+        uint64_t channelLayout = AV_CH_LAYOUT_MONO;
+        switch(mAudioContext->codec->channels)
+        {
+        case 1:
+            channelLayout = AV_CH_LAYOUT_MONO;
+            break;
+        case 2:
+            channelLayout = AV_CH_LAYOUT_STEREO;
+            break;
+        case 3:
+            channelLayout = AV_CH_LAYOUT_2POINT1;
+            break;
+        case 4:
+            channelLayout = AV_CH_LAYOUT_3POINT1;
+            break;
+        case 5:
+            channelLayout = AV_CH_LAYOUT_4POINT1;
+            break;
+        case 6:
+            channelLayout = AV_CH_LAYOUT_5POINT1;
+            break;
+        case 7:
+            channelLayout = AV_CH_LAYOUT_6POINT1;
+            break;
+        case 8:
+            channelLayout = AV_CH_LAYOUT_7POINT1;
+            break;
+        default:
+            channelLayout = AV_CH_LAYOUT_MONO;
+            break;
+        }
         mRender->open(mAudioContext->codec->sample_rate,
-                        mAudioContext->codec->channel_layout,
+                        channelLayout, // mAudioContext->codec->channel_layout is not accurate for some videos.
                         mAudioContext->codec->channels,
                          mAudioContext->codec->sample_fmt);
         

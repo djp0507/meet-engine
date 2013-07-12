@@ -41,7 +41,7 @@ JavaVM* gs_jvm = NULL;
 extern "C" IPlayer* getPlayer(void* context)
 {
 #ifdef OS_ANDROID
-    android::PlatformInfo* platformInfo = (android::PlatformInfo*)context;
+    PlatformInfo* platformInfo = (PlatformInfo*)context;
 	gs_jvm = (JavaVM*)(platformInfo->jvm);
 #endif
 	return new FFPlayer();
@@ -2236,13 +2236,13 @@ void FFPlayer::optimizeDecode_l(AVPacket* packet)
         {
             mVideoStream->codec->skip_loop_filter = AVDISCARD_ALL;
         }
-        mVideoStream->codec->skip_frame = AVDISCARD_DEFAULT;//mDiscardLevel;
+        //mVideoStream->codec->skip_frame = AVDISCARD_DEFAULT;//mDiscardLevel;
         LOGD("notify ffmpeg to do more optimization. mDiscardLevel:%d, mDiscardCount:%d,", mDiscardLevel, mDiscardCount);
     }
     else
     {
         mVideoStream->codec->skip_loop_filter = AVDISCARD_DEFAULT;
-        mVideoStream->codec->skip_frame = AVDISCARD_DEFAULT;
+        //mVideoStream->codec->skip_frame = AVDISCARD_DEFAULT;
     }
 }
 
