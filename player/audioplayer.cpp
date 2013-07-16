@@ -98,15 +98,17 @@ public:
             {
                 switch(mSampleFormat)
                 {
+                case AV_SAMPLE_FMT_U8:
                 case AV_SAMPLE_FMT_U8P:
                     mFormatSize = 1;
                     break;
+                case AV_SAMPLE_FMT_S16:
                 case AV_SAMPLE_FMT_S16P:
                     mFormatSize = 2;
                     break;
                 case AV_SAMPLE_FMT_S32:
-                case AV_SAMPLE_FMT_FLT:
                 case AV_SAMPLE_FMT_S32P:
+                case AV_SAMPLE_FMT_FLT:
                 case AV_SAMPLE_FMT_FLTP:
                     mFormatSize = 4;
                     break;
@@ -116,6 +118,7 @@ public:
                     break;
                 default:
                     mFormatSize = 2;
+                    LOGI("unsupported sample format %d", mSampleFormat);
                     break;
                 }
                 
@@ -183,7 +186,7 @@ public:
             uint32_t sampleCount = buffer_size / mChannels / mFormatSize;
             LOGD("sampleCount:%d", sampleCount);
             int sampleCountOutput = swr_convert(mConvertCtx,
-                    (uint8_t**)(&mSamples), (int)sampleCount, 
+                    (uint8_t**)(&mSamples), (int)sampleCount,
                     (const uint8_t**)(&buffer), (int)sampleCount);
             if(sampleCountOutput > 0)
             {
@@ -347,9 +350,9 @@ status_t AudioPlayer::prepare()
             break;
         }
         mRender->open(mAudioContext->codec->sample_rate,
-                        channelLayout, // mAudioContext->codec->channel_layout is not accurate for some videos.
+                        channelLayout,//mAudioContext->codec->channel_layout is not accurate for some videos.
                         mAudioContext->codec->channels,
-                         mAudioContext->codec->sample_fmt);
+                        mAudioContext->codec->sample_fmt);
         
     	mNumFramesPlayed = 0;
         mPositionTimeMediaMs = 0;

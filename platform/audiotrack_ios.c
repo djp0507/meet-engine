@@ -11,9 +11,7 @@
 #include "log.h"
 #include "audiotrack.h"
 
-#define kDefaultDistance 25.0
 #define NUM_BUFFERS 3
-#define BUFFER_SIZE 10240
 
 
 struct oalContext
@@ -54,22 +52,33 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 		{
 			alContext.format = AL_FORMAT_MONO8;
 		}
-		else
+		else if(channelLayout == AV_CH_LAYOUT_STEREO)
 		{
 			alContext.format = AL_FORMAT_STEREO8;
 		}
+        else
+        {
+            LOGI("unsupported channel layout %d", channelLayout);
+			alContext.format = AL_FORMAT_STEREO8;
+        }
 		break;
 	case AV_SAMPLE_FMT_S16:
 		if(channelLayout == AV_CH_LAYOUT_MONO)
 		{
 			alContext.format = AL_FORMAT_MONO16 ;
 		}
-		else
+		else if(channelLayout == AV_CH_LAYOUT_STEREO)
 		{
 			alContext.format = AL_FORMAT_STEREO16;
 		}
+        else
+        {
+            LOGI("unsupported channel layout %d", channelLayout);
+			alContext.format = AL_FORMAT_STEREO16;
+        }
 		break;
-	default:
+    default:
+        LOGI("unsupported sample format %d", sampleFormat);
 		alContext.format = AL_FORMAT_STEREO16;
 		break;
 	}
@@ -100,7 +109,7 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 			alGenSources(1, &alContext.source);
 			if(alGetError() != AL_NO_ERROR) 
 			{
-				LOGE("Error generating sources! %x\n", error);
+				LOGE("Error generating sources! %x", error);
 				return ERROR;
 			}
             //alSourcei(alContext.source, AL_LOOPING, AL_FALSE);
@@ -139,8 +148,7 @@ status_t AudioTrack_start()
 	// Begin playing our source file
 	alSourcePlay(alContext.source);
 	if((error = alGetError()) != AL_NO_ERROR) {
-		LOGE("error starting source: %x\n", error);
-        //NSLog(@"error starting source: %x\n", error);
+		LOGE("error starting source: %x", error);
 	}
 
     return OK;
@@ -163,8 +171,7 @@ status_t AudioTrack_stop()
 	// Stop playing our source file
 	alSourceStop(alContext.source);
 	if((error = alGetError()) != AL_NO_ERROR) {
-		LOGE("error stopping source: %x\n", error);
-		//NSLog(@"error stopping source: %x\n", error);
+		LOGE("error stopping source: %x", error);
 	} 
     return OK;
 }
@@ -176,7 +183,7 @@ status_t AudioTrack_pause()
 	// Pause playing our source file
 	alSourcePause(alContext.source);
 	if((error = alGetError()) != AL_NO_ERROR) {
-		LOGE("error pausing source: %x\n", error);
+		LOGE("error pausing source: %x", error);
 	} 
     return OK;
 }
@@ -199,7 +206,7 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
             error = alGetError();
             if (error != AL_NO_ERROR)
             {
-                //NSLog(@"error playing data: %x\n", error);
+                LOGE("error playing data: %x", error);
                 return 0;
             }
             return buffer_size;
@@ -214,7 +221,7 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
             error = alGetError();
             if (error != AL_NO_ERROR)
             {
-                //NSLog(@"error loading buffer data: %x\n", error);
+                LOGE("error loading buffer data: %x", error);
                 return 0;
             }
             
@@ -222,14 +229,14 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
             error = alGetError();
             if (error != AL_NO_ERROR)
             {
-                //NSLog(@"error queue buffer data: %x\n", error);
+                LOGE("error queue buffer data: %x", error);
                 return 0;
             }
             return buffer_size;
         }
         else
         {
-            //NSLog(@"invalid buffer index: %d\n", queued);
+            LOGE("invalid buffer index: %d", queued);
             return 0;
         }
 
@@ -252,7 +259,7 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
                 error = alGetError();
                 if (error != AL_NO_ERROR)
                 {
-                    //NSLog(@"error unqueue buffer data: %x\n", error);
+                    LOGE("error unqueue buffer data: %x", error);
                     return 0;
                 }
                 
@@ -266,7 +273,7 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
                 error = alGetError();
                 if (error != AL_NO_ERROR)
                 {
-                    //NSLog(@"error queue buffer data: %x\n", error);
+                    LOGE("error queue buffer data: %x", error);
                     return 0;
                 }
                 
