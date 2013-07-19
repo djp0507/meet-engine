@@ -179,7 +179,7 @@ public:
     }
 
     status_t render(int16_t* buffer, uint32_t buffer_size)
-    {        
+    {
         if(mConvertCtx != NULL && mSamples != NULL)
         {
 	        int64_t begin_decode = getNowMs();
@@ -202,7 +202,6 @@ public:
             int64_t end_decode = getNowMs();
         	LOGD("convert audio cost %lld[ms]", (end_decode-begin_decode));
         }
-        
     	int32_t size = AudioTrack_write(buffer, buffer_size);
         if(size <= 0) {
             LOGE("Failed to write audio sample");
@@ -265,7 +264,6 @@ AudioPlayer::AudioPlayer(FFStream* dataStream, AVStream* context, int32_t stream
     {
         mDurationMs = 0;
     }
-    //mPlayedDurationMs = 0;
     mOutputBufferingStartMs = 0;
     mAvePacketDurationMs = 0;
     mLastPacketMs = 0;

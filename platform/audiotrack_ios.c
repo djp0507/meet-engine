@@ -6,22 +6,27 @@
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
 #import <unistd.h>
+#import <stdlib.h>
 
 #include "errors.h"
 #include "log.h"
 #include "audiotrack.h"
 
-#define NUM_BUFFERS 3
+#define BUFFER_TIME_MS 100
 
 
 struct oalContext
 {
 	ALCdevice* device;
 	ALCcontext* context;
-	ALuint buffers[NUM_BUFFERS];
+	ALuint* buffers;
 	ALuint source;
 	ALenum format;
 	ALsizei freq;
+    
+    int channels;
+    int sampleSize;
+    int numBuffer;
 /*
 	void*					data;
 	CGPoint					sourcePos;
@@ -42,6 +47,8 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 {
 	alContext.device = NULL;
 	alContext.context = NULL;
+    alContext.buffers = NULL;
+    alContext.numBuffer = 0;
 	
 	ALenum error;
 	
@@ -51,35 +58,45 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 		if(channelLayout == AV_CH_LAYOUT_MONO)
 		{
 			alContext.format = AL_FORMAT_MONO8;
+            alContext.channels = 1;
 		}
 		else if(channelLayout == AV_CH_LAYOUT_STEREO)
 		{
 			alContext.format = AL_FORMAT_STEREO8;
+            alContext.channels = 2;
 		}
         else
         {
             LOGI("unsupported channel layout %d", channelLayout);
 			alContext.format = AL_FORMAT_STEREO8;
+            alContext.channels = 2;
         }
+        alContext.sampleSize = 1;
 		break;
 	case AV_SAMPLE_FMT_S16:
 		if(channelLayout == AV_CH_LAYOUT_MONO)
 		{
 			alContext.format = AL_FORMAT_MONO16 ;
+            alContext.channels = 1;
 		}
 		else if(channelLayout == AV_CH_LAYOUT_STEREO)
 		{
 			alContext.format = AL_FORMAT_STEREO16;
+            alContext.channels = 2;
 		}
         else
         {
             LOGI("unsupported channel layout %d", channelLayout);
 			alContext.format = AL_FORMAT_STEREO16;
+            alContext.channels = 2;
         }
+        alContext.sampleSize = 2;
 		break;
     default:
         LOGI("unsupported sample format %d", sampleFormat);
-		alContext.format = AL_FORMAT_STEREO16;
+        alContext.format = AL_FORMAT_STEREO16;
+        alContext.sampleSize = 2;
+        alContext.channels = 2;
 		break;
 	}
 
@@ -97,17 +114,10 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, enum AVSampleFo
 		{
 			// Make the new context the Current OpenAL Context
 			alcMakeContextCurrent(alContext.context);
-			
-			// Create some OpenAL Buffer Objects
-			alGenBuffers(NUM_BUFFERS, alContext.buffers);
-			if((error = alGetError()) != AL_NO_ERROR) {
-				LOGE("Error Generating Buffers: %x", error);
-				return ERROR;
-			}
-			
+            
 			// Create some OpenAL Source Objects
 			alGenSources(1, &alContext.source);
-			if(alGetError() != AL_NO_ERROR) 
+			if((error = alGetError()) != AL_NO_ERROR)
 			{
 				LOGE("Error generating sources! %x", error);
 				return ERROR;
@@ -196,11 +206,32 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
     alGetSourcei(alContext.source, AL_SOURCE_STATE, &state);
     if (state == AL_INITIAL)
     {
+        if (alContext.numBuffer == 0
+           && alContext.channels != 0
+           && alContext.sampleSize != 0
+           && alContext.freq != 0
+           && BUFFER_TIME_MS != 0)
+        {
+            alContext.numBuffer = BUFFER_TIME_MS/(1000*buffer_size/alContext.channels/alContext.sampleSize/alContext.freq)+1;
+            if (alContext.numBuffer <= 0 || alContext.numBuffer > 100)
+            {
+				LOGE("Invalid Buffer num: %d", alContext.numBuffer);
+                alContext.numBuffer = 0;
+				return ERROR;
+            }
+			// Create some OpenAL Buffer Objects
+            alContext.buffers = (ALuint*)malloc(sizeof(ALuint)*alContext.numBuffer);
+			alGenBuffers(alContext.numBuffer, alContext.buffers);
+			if((error = alGetError()) != AL_NO_ERROR) {
+				LOGE("Error Generating Buffers: %x", error);
+				return ERROR;
+			}
+        }
         ALint queued;
         alGetSourcei(alContext.source,
                      AL_BUFFERS_QUEUED,
                      &queued);
-        if (queued == NUM_BUFFERS)
+        if (queued == alContext.numBuffer)
         {
             alSourcePlay(alContext.source);
             error = alGetError();
@@ -211,7 +242,7 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
             }
             return buffer_size;
         }
-        else if (queued < NUM_BUFFERS && queued >= 0)
+        else if (queued < alContext.numBuffer && queued >= 0)
         {
             alBufferData(alContext.buffers[queued],
                          alContext.format,
@@ -263,7 +294,6 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
                     return 0;
                 }
                 
-                //TODO:check buffer_size range
                 alBufferData(bufferUnqueued,
                              alContext.format,
                              buffer,
@@ -295,15 +325,20 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
 
 uint32_t AudioTrack_getLatency()
 {
-    return 0;
+    return BUFFER_TIME_MS;
 }
 
 status_t AudioTrack_close()
 {
 	// Delete the Sources
     alDeleteSources(1, &alContext.source);
-	// Delete the Buffers
-    alDeleteBuffers(NUM_BUFFERS, alContext.buffers);
+    if(alContext.buffers != NULL)
+    {
+        // Delete the Buffers
+        alDeleteBuffers(alContext.numBuffer, alContext.buffers);
+        free(alContext.buffers);
+        alContext.buffers = NULL;
+    }
 
 	if(alContext.context != NULL)
 	{
