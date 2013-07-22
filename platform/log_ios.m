@@ -5,6 +5,7 @@
 
 void __ios_log(const char *fmt, ...)
 {
+    return;
     va_list argp;
     va_start(argp, fmt);
     

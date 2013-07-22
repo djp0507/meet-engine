@@ -689,6 +689,7 @@ void* AudioPlayer::handleThreadStart(void* ptr)
 		return 0;
 	}
     
+#ifdef OS_ANDROID
     LOGD("getpriority before:%d", getpriority(PRIO_PROCESS, 0));
     int audioThreadPriority = -6;
     if(setpriority(PRIO_PROCESS, 0, audioThreadPriority) != 0)
@@ -696,7 +697,8 @@ void* AudioPlayer::handleThreadStart(void* ptr)
         LOGE("set audio thread priority failed");
     }
     LOGD("getpriority after:%d", getpriority(PRIO_PROCESS, 0));
-        
+#endif
+    
     AudioPlayer* audioPlayer = (AudioPlayer *) ptr;
     audioPlayer->mRunning = true;
     audioPlayer->run();

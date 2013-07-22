@@ -3,7 +3,6 @@
  *
  */
 
-#import "glview.h"
 #import <QuartzCore/QuartzCore.h>
 #import <OpenGLES/EAGLDrawable.h>
 #import <OpenGLES/EAGL.h>
@@ -20,6 +19,8 @@ extern "C" {
 }
 #endif
 
+#import "log.h"
+#import "glview.h"
 
 #define glCheckError() { \
 GLenum err = glGetError(); \
@@ -96,14 +97,14 @@ static BOOL validateProgram(GLuint prog)
     {
         GLchar *log = (GLchar *)malloc(logLength);
         glGetProgramInfoLog(prog, logLength, &logLength, log);
-        NSLog(@"Program validate log:\n%s", log);
+        LOGD("Program validate log:%s", log);
         free(log);
     }
 #endif
     
     glGetProgramiv(prog, GL_VALIDATE_STATUS, &status);
     if (status == GL_FALSE) {
-		NSLog(@"Failed to validate program %d", prog);
+		LOGE("Failed to validate program %d", prog);
         return NO;
     }
 	
@@ -117,7 +118,7 @@ static GLuint compileShader(GLenum type, NSString *shaderString)
 	
     GLuint shader = glCreateShader(type);
     if (shader == 0 || shader == GL_INVALID_ENUM) {
-        NSLog(@"Failed to create shader %d", type);
+        LOGD("Failed to create shader %d", type);
         return 0;
     }
     
@@ -131,7 +132,7 @@ static GLuint compileShader(GLenum type, NSString *shaderString)
     {
         GLchar *log = (GLchar *)malloc(logLength);
         glGetShaderInfoLog(shader, logLength, &logLength, log);
-        NSLog(@"Shader compile log:\n%s", log);
+        LOGD("Shader compile log:%s", log);
         free(log);
     }
 #endif
@@ -139,7 +140,7 @@ static GLuint compileShader(GLenum type, NSString *shaderString)
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status == GL_FALSE) {
         glDeleteShader(shader);
-		NSLog(@"Failed to compile shader:\n");
+		LOGD("Failed to compile shader:\n");
         return 0;
     }
     
@@ -410,12 +411,12 @@ enum {
         if ((format == PIX_FMT_YUV420P) || (format == PIX_FMT_YUVJ420P)) {
             
             _renderer = [[GLRenderer_YUV alloc] init];
-            NSLog(@"OK use YUV GL renderer");
+            LOGD("OK use YUV GL renderer");
             
         } else {
             
             _renderer = [[GLRenderer_RGB alloc] init];
-            NSLog(@"OK use RGB GL renderer");
+            LOGD("OK use RGB GL renderer");
         }
                 
         CAEAGLLayer *eaglLayer = (CAEAGLLayer*) self.layer;
@@ -447,7 +448,7 @@ enum {
         _vertices[6] =  1.0f;  // x3
         _vertices[7] =  1.0f;  // y3
         
-        NSLog(@"OK setup GL");
+        LOGD("OK setup GL");
     }
     
     return self;
@@ -490,11 +491,11 @@ enum {
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
 		
-        NSLog(@"failed to make complete framebuffer object %x", status);
+        LOGD("failed to make complete framebuffer object %x", status);
         
 	} else {
         
-        NSLog(@"OK setup GL framebuffer %d:%d", _backingWidth, _backingHeight);
+        LOGD("OK setup GL framebuffer %d:%d", _backingWidth, _backingHeight);
     }    
     [self updateVertices];
     [self render: nil];
@@ -533,7 +534,7 @@ enum {
     GLint status;
     glGetProgramiv(_program, GL_LINK_STATUS, &status);
     if (status == GL_FALSE) {
-		NSLog(@"Failed to link program %d", _program);
+		LOGD("Failed to link program %d", _program);
         goto exit;
     }
     
@@ -551,7 +552,7 @@ exit:
     
     if (result) {
         
-        NSLog(@"OK setup GL programm");
+        LOGD("OK setup GL programm");
         
     } else {
         
@@ -618,7 +619,7 @@ exit:
     #if 0
         if (!validateProgram(_program))
         {
-            NSLog(@"Failed to validate program");
+            LOGE("Failed to validate program");
             return;
         }
     #endif
@@ -636,7 +637,7 @@ exit:
     if (!_context ||
         ![EAGLContext setCurrentContext:_context]) {
         
-        NSLog(@"failed to setup EAGLContext");
+        LOGE("failed to setup EAGLContext");
         return NO;
     }
     
@@ -652,14 +653,14 @@ exit:
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         
-        NSLog(@"failed to make complete framebuffer object %x", status);
+        LOGE("failed to make complete framebuffer object %x", status);
         return NO;
     }
     
     GLenum glError = glGetError();
     if (GL_NO_ERROR != glError) {
         
-        NSLog(@"failed to setup GL %x", glError);
+        LOGE("failed to setup GL %x", glError);
         return NO;
     }
     return YES;

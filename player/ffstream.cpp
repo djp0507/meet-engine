@@ -612,7 +612,8 @@ status_t FFStream::join_l()
 }
 
 void* FFStream::handleThreadStart(void* ptr)
-{    
+{
+#ifdef OS_ANDROID
     LOGD("getpriority before:%d", getpriority(PRIO_PROCESS, 0));
     int streamThreadPriority = -6;
     if(setpriority(PRIO_PROCESS, 0, streamThreadPriority) != 0)
@@ -620,7 +621,8 @@ void* FFStream::handleThreadStart(void* ptr)
         LOGE("set stream thread priority failed");
     }
     LOGD("getpriority after:%d", getpriority(PRIO_PROCESS, 0));
-
+#endif
+    
     FFStream* stream = (FFStream*)ptr;
     stream->mRunning = true;    
     stream->run();

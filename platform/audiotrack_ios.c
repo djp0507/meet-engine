@@ -12,7 +12,7 @@
 #include "log.h"
 #include "audiotrack.h"
 
-#define BUFFER_TIME_MS 100
+#define BUFFER_TIME_MS 200
 
 
 struct oalContext

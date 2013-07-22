@@ -176,15 +176,17 @@ void *Loop::ThreadWrapper(void *me)
     gs_jvm->AttachCurrentThread(&env, NULL);
     LOGD("getpriority before:%d", getpriority(PRIO_PROCESS, 0));
     LOGD("sched_getscheduler:%d", sched_getscheduler(0));
-#endif
+
     int videoThreadPriority = -6;
     if(setpriority(PRIO_PROCESS, 0, videoThreadPriority) != 0)
     {
         LOGE("set video thread priority failed");
     }
     LOGD("getpriority after:%d", getpriority(PRIO_PROCESS, 0));
-
+#endif
+    
     static_cast<Loop *>(me)->threadEntry();
+    
 #ifdef OS_ANDROID
     gs_jvm->DetachCurrentThread();
 #endif
