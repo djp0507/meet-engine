@@ -23,7 +23,7 @@ extern "C"
 
 #define LOG_TAG "FFStream"
 
-#define FF_PLAYER_MIN_FRAME_COUNT_DEFAULT 150 //6s
+#define FF_PLAYER_MIN_FRAME_COUNT_DEFAULT 100 //4s
 #define FF_PLAYER_MAX_QUEUE_SIZE_DEFAULT 1024*1024*10 //10m
 
 FFStream::FFStream()
