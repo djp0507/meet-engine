@@ -95,7 +95,7 @@ public:
      * 获取字幕图片
      *     尽快使用图片内存,ISubtitles会复用*bitmapData指向的内存
      */
-    virtual int getSubtitleImage(int *width, int *height, void** bitmapData);
+    virtual int getSubtitleImage(int *width, int *height, void** bitmapData) = 0;
 };
 
 class ISubtitles
