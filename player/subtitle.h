@@ -1,5 +1,12 @@
-#ifndef SUBTITLE_H
+﻿#ifndef SUBTITLE_H
 #define SUBTITLE_H
+
+#ifdef _MSC_VER
+    typedef __int64          int64_t;
+    typedef unsigned __int64 uint64_t;
+#else
+    #include <stdint.h>
+#endif
 
 typedef enum
 {
@@ -84,11 +91,22 @@ public:
      *         text 可以为NULL, 直接返回缓冲区的的大小
      */
     virtual int getSubtitleText(char* text, int maxLength) = 0;
+    /*
+     * 获取字幕图片
+     *     尽快使用图片内存,ISubtitles会复用*bitmapData指向的内存
+     */
+    virtual int getSubtitleImage(int *width, int *height, void** bitmapData);
 };
 
 class ISubtitles
 {
 public:
+    static bool create(ISubtitles** subtitle);
+public:
+    /*
+     * 关闭字幕组件
+     */
+    virtual void close() = 0;
     /**
      * 获取当前字幕的个数
      */
@@ -127,11 +145,20 @@ public:
 
     /**
      * 获取时间点对应的字幕段
-     * @param[in]  time     时间点
+     * @param[in]  time     时间点,单位: 毫秒
      * @param[out] segment  时间点对应的字幕
      */
     virtual bool getSubtitleSegment(int64_t time, STSSegment** segment) = 0;
 
+    /**
+     * 与 getNextSubtitleSegment 配合使用，设置时间点到 time
+     * @param[in]  time     时间点，单位：毫秒
+     */
+    virtual bool seekTo(int64_t time) = 0;
+    /**
+     * 获取下一个字幕段
+     */
+    virtual bool getNextSubtitleSegment(STSSegment** segment) = 0;
     /**
      * 加载字幕，添加到字幕列表中
      * @param[in] fileName     字幕文件路径
