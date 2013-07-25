@@ -10,7 +10,7 @@ char parse_bool(char *str)
 {
     while (*str == ' ' || *str == '\t')
         str++;
-    if (!_strnicmp(str, "yes", 3))
+    if (!strncasecmp(str, "yes", 3))
         return 1;
     else if (strtol(str, NULL, 10) > 0)
         return 1;

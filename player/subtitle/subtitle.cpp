@@ -154,7 +154,7 @@ bool CSubtitleManager::loadSubtitle(const char* fileName, bool isMediaFile)
 {
     std::vector<CSimpleTextSubtitle*>::iterator itr = mSubtitles.begin();
     for (; itr != mSubtitles.end(); ++itr) {
-        if (stricmp((*itr)->getFileName(), fileName) == 0) {
+        if (strcmp((*itr)->getFileName(), fileName) == 0) {
             return true;
         }
     }
@@ -176,7 +176,7 @@ int  CSubtitleManager::getSubtitleIndex(const char* fileName)
 {
     std::vector<CSimpleTextSubtitle*>::iterator itr = mSubtitles.begin();
     for (int index = 0; itr != mSubtitles.end(); ++itr) {
-        if (stricmp((*itr)->getFileName(), fileName) == 0) {
+        if (strcmp((*itr)->getFileName(), fileName) == 0) {
             return index;
         }
     }

@@ -176,8 +176,3 @@
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
 #endif
-
-#define strncasecmp strnicmp
-#define strcasecmp stricmp
-
-#define strtoll(p, e, b) _strtoi64(p, e, b)
