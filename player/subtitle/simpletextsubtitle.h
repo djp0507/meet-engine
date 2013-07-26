@@ -15,7 +15,7 @@ public:
         mNextSegment = 0;
         mFileName = NULL;
     }
-    ~CSimpleTextSubtitle();
+    virtual ~CSimpleTextSubtitle();
 
     bool LoadFile(const char* fileName);
 

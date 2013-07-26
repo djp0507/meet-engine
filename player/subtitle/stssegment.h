@@ -11,7 +11,7 @@ public:
       mSubtitle(subtitle),mStartTime(startTime),mStopTime(stopTime)
       {
       }
-      ~CSTSSegment()
+      virtual ~CSTSSegment()
       {
       }
 

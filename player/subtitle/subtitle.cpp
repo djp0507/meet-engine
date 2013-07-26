@@ -28,7 +28,7 @@ class CSubtitleManager :
 {
 public:
     CSubtitleManager();
-    ~CSubtitleManager();
+    virtual ~CSubtitleManager();
 
     // ISubtitles
 public:
@@ -205,8 +205,8 @@ int main(int argc, char* argv[])
     if (!ISubtitles::create(&subtitle)) {
         return 0;
     }
-    subtitle->loadSubtitle("test.ass", false);
-    subtitle->seekTo(60000);
+    subtitle->loadSubtitle("utf8.ass", false);
+    subtitle->seekTo(0);
 
     STSSegment* segment = NULL;
     while(subtitle->getNextSubtitleSegment(&segment)) {

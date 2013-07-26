@@ -31,7 +31,7 @@ bool CSimpleTextSubtitle::LoadFile(const char* fileName)
     if (!mAssLibrary) {
         return false;
     }
-    mAssTrack = ass_read_file(mAssLibrary, const_cast<char*>(fileName), NULL);
+    mAssTrack = ass_read_file(mAssLibrary, const_cast<char*>(fileName), "enca:zh:utf-8");
     if (!mAssTrack) {
         return false;
     }

@@ -61,6 +61,36 @@ struct parser_priv {
 #define ASS_STYLES_ALLOC 20
 #define ASS_EVENTS_ALLOC 200
 
+char* ass_remove_format_tag(char* src)
+{
+    char *p1 = src;
+    char *p2 = src;
+
+    if (!src) {
+        return src;
+    }
+    while(*p2) {
+        int in_tag = 0;
+        if (*p2 == '{') {
+            p2++;
+            in_tag = 1;
+        }
+        if (in_tag) {
+            while (*p2 != '}' && *p2 != 0) { ++p2;}
+            if (*p2 == '}') { p2++; }
+            
+        } else if (*p2 == '\\' && (*(p2 + 1) == 'n' || *(p2 + 1) == 'N')) {
+            *p1++ = '\n';
+            p2 += 2;
+        } else {
+            *p1++ = *p2++;
+        }
+    }
+
+    *p1 = '\x0';
+    return src;
+}
+
 void ass_free_track(ASS_Track *track)
 {
     int i;
@@ -325,7 +355,7 @@ static int process_event_tail(ASS_Track *track, ASS_Event *event,
         NEXT(q, tname);
         if (strcasecmp(tname, "Text") == 0) {
             char *last;
-            event->Text = strdup(p);
+            event->Text = ass_remove_format_tag(strdup(p));
             if (*event->Text != 0) {
                 last = event->Text + strlen(event->Text) - 1;
                 if (last >= event->Text && *last == '\r')

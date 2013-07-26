@@ -1,11 +1,28 @@
+#include "config.h"
 #include "libass/ass.h"
+#include "ass_library.h"
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef CONFIG_ENCA
+#include <enca.h>
+#endif
+
+#define MSGL_FATAL 0
+#define MSGL_ERR 1
+#define MSGL_WARN 2
+#define MSGL_INFO 4
+#define MSGL_V 6
+#define MSGL_DBG2 7
+
 void ass_msg(ASS_Library *priv, int lvl, char *fmt, ...)
 {
-
+    va_list va;
+    va_start(va, fmt);
+    priv->msg_callback(lvl, fmt, va, priv->msg_callback_data);
+    va_end(va);
 }
+
 char parse_bool(char *str)
 {
     while (*str == ' ' || *str == '\t')
@@ -80,3 +97,48 @@ int strtocolor(ASS_Library *library, char **q, uint32_t *res, int hex)
     *res = color;
     return result;
 }
+
+#ifdef CONFIG_ENCA
+void *ass_guess_buffer_cp(ASS_Library *library, unsigned char *buffer,
+                          int buflen, char *preferred_language,
+                          char *fallback)
+{
+    const char **languages;
+    size_t langcnt;
+    EncaAnalyser analyser;
+    EncaEncoding encoding;
+    char *detected_sub_cp = NULL;
+    int i;
+
+    languages = enca_get_languages(&langcnt);
+    ass_msg(library, MSGL_V, "ENCA supported languages");
+    for (i = 0; i < langcnt; i++) {
+        ass_msg(library, MSGL_V, "lang %s", languages[i]);
+    }
+
+    for (i = 0; i < langcnt; i++) {
+        const char *tmp;
+
+        if (strcasecmp(languages[i], preferred_language) != 0)
+            continue;
+        analyser = enca_analyser_alloc(languages[i]);
+        encoding = enca_analyse_const(analyser, buffer, buflen);
+        tmp = enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV);
+        if (tmp && encoding.charset != ENCA_CS_UNKNOWN) {
+            detected_sub_cp = strdup(tmp);
+            ass_msg(library, MSGL_INFO, "ENCA detected charset: %s", tmp);
+        }
+        enca_analyser_free(analyser);
+    }
+
+    free(languages);
+
+    if (!detected_sub_cp) {
+        detected_sub_cp = strdup(fallback);
+        ass_msg(library, MSGL_INFO,
+            "ENCA detection failed: fallback to %s", fallback);
+    }
+
+    return detected_sub_cp;
+}
+#endif

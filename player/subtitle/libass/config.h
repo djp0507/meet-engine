@@ -176,3 +176,10 @@
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
 #endif
+
+#if defined(OS_WIN32) || defined(WIN32)
+#define strncasecmp _strnicmp
+#define strcasecmp stricmp
+
+#define strtoll(p, e, b) _strtoi64(p, e, b)
+#endif // OS_WIN32
