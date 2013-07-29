@@ -1,7 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 
-PLAYER_BASE := ../../../../player
+ENGINE_BASE := ../../../..
+PLAYER_BASE := $(ENGINE_BASE)/player
 SUBTITLE_BASE := $(PLAYER_BASE)/subtitle
+JNI_BASE := ./
 
 ####################[libsubtitle]####################
 include $(CLEAR_VARS)
@@ -22,4 +24,20 @@ LOCAL_C_INCLUDES := \
 LOCAL_MODULE := subtitle
 
 include $(BUILD_STATIC_LIBRARY)
+
+####################[libsubtitle-jni]####################
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	$(JNI_BASE)/android_ppmedia_subtitle_SampleSubtitleParser.cpp
+
+LOCAL_C_INCLUDES := \
+	$(ENGINE_BASE)
+
+LOCAL_STATIC_LIBRARIES := \
+	libsubtitle
+
+LOCAL_MODULE := subtitle-jni
+
+include $(BUILD_SHARED_LIBRARY)
 
