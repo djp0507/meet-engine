@@ -1,0 +1,13 @@
+Makefile
+config.h
+config.log
+config.status
+enca.pc
+libtool
+stamp-h1
+iconvenc.h
+enca.spec
+iconvcap
+autom4te.cache
+tags
+TAGS
