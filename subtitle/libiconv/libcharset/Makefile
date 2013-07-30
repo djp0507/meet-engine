@@ -1,7 +1,7 @@
-include ../$(PLATFORM).mk
+include ../../$(PLATFORM).mk
 
-CFLAGS := $(CFLAGS) -Wall -I./libass -I../libiconv/include -Wno-write-strings
-CPPFLAGS := $(CPPFLAGS) -Wall -I. -I../enca/lib -Wno-write-strings
+CFLAGS := $(CFLAGS) -Wall -I./ -I./include -I../ -I../include -DLIBDIR -Wno-write-strings
+CPPFLAGS := $(CPPFLAGS) -Wall -I. -Wno-write-strings
 
 ifeq ($(DEBUG), y)
 CFLAGS += -g
@@ -11,10 +11,13 @@ CFLAGS += -O2
 CPPFLAGS += -O2
 endif
 
+SUBDIRS != 
+LDFLAGS = 
+
 RM = rm
 
-target = libass.a
-CSOURCES = libass/ass.c libass/ass_library.c libass/libass_glue.c
+target = libcharset.a
+CSOURCES = $(wildcard lib/*.c)
 COBJS := $(subst .c,.o,$(CSOURCES))
 
 OBJS = $(CPPOBJS) $(COBJS)
@@ -25,7 +28,7 @@ all: $(target)
 
 
 $(target): $(OBJS)
-	for dir in $(SUBDIRS); \
+	@for dir in $(SUBDIRS); \
 		do $(MAKE) -C $$dir all || exit 1;\
 	done
 	$(AR) $@ $(LDFLAGS) $^
@@ -33,6 +36,9 @@ $(target): $(OBJS)
 clear:
 	$(RM) -f $(OBJS)
 	$(RM) -f $(target)
+	@for dir in $(SUBDIRS); \
+		do $(MAKE) -C $$dir clear || exit 1;\
+	done
 
 info:
 	echo $(OBJS)
