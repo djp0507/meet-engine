@@ -28,7 +28,7 @@ AR="$TOOLCHAINS_BASE/arm-linux-androideabi-ar "
 
 CFLAGS=" -fpic -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -mthumb -Os -g -DNDEBUG -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 "
 CXXFLAGS=" -fpic -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-exceptions -fno-rtti -mthumb -Os -g -DNDEBUG -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 "
-INCLUDES=" -I$PLAYER_BASE -I$SUBTITLE_BASE -I$SUBTITLE_BASE/libass -I$NDK/SOURCEs/cxx-stl/stlport/stlport -I$NDK/sources/cxx-stl/gabi++/include "
+INCLUDES=" -I$PLAYER_BASE -I$SUBTITLE_BASE -I$SUBTITLE_BASE/libass -I$NDK/sources/cxx-stl/stlport/stlport -I$NDK/sources/cxx-stl/gabi++/include "
 EXTRA_CFLAGS=" -DANDROID -Wa,--noexecstack "
 EXTRA_CXXFLAGS=" -DANDROID -Wa,--noexecstack -frtti "
 EXTRA_INCLUDES=" -I$NDK/platforms/android-9/arch-arm/usr/include "
