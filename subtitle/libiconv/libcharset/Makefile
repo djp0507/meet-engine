@@ -1,8 +1,11 @@
 include ../../$(PLATFORM).mk
 
-CFLAGS := $(CFLAGS) -Wall -I./ -I./include -I../ -I../include -DLIBDIR -Wno-write-strings
+CFLAGS := $(CFLAGS) -Wall -I./ -I./include -I../include -DLIBDIR -Wno-write-strings
 CPPFLAGS := $(CPPFLAGS) -Wall -I. -Wno-write-strings
 
+ifeq ($(PLATFORM), android)
+CFLAGS := $(CFLAGS)  -I$(NDK)/sources/android/support/include
+endif
 ifeq ($(DEBUG), y)
 CFLAGS += -g
 CPPFLAGS += -g
@@ -11,7 +14,9 @@ CFLAGS += -O2
 CPPFLAGS += -O2
 endif
 
+
 SUBDIRS != 
+
 LDFLAGS = 
 
 RM = rm

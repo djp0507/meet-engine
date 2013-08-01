@@ -48,19 +48,19 @@ static const EncaLanguageInfo ENCA_LANGUAGE___ = {
 
 /* All languages. */
 static const EncaLanguageInfo *const LANGUAGE_LIST[] = {
-  &ENCA_LANGUAGE_BE, /* Belarussian. */
-  &ENCA_LANGUAGE_BG, /* Bulgarian. */
-  &ENCA_LANGUAGE_CS, /* Czech. */
-  &ENCA_LANGUAGE_ET, /* Estonian. */
-  &ENCA_LANGUAGE_HR, /* Croatian. */
-  &ENCA_LANGUAGE_HU, /* Hungarian. */
-  &ENCA_LANGUAGE_LT, /* Latvian. */
-  &ENCA_LANGUAGE_LV, /* Lithuanian. */
-  &ENCA_LANGUAGE_PL, /* Polish. */
-  &ENCA_LANGUAGE_RU, /* Russian. */
-  &ENCA_LANGUAGE_SK, /* Slovak. */
-  &ENCA_LANGUAGE_SL, /* Slovene. */
-  &ENCA_LANGUAGE_UK, /* Ukrainian. */
+  // &ENCA_LANGUAGE_BE, /* Belarussian. */
+  // &ENCA_LANGUAGE_BG, /* Bulgarian. */
+  // &ENCA_LANGUAGE_CS, /* Czech. */
+  // &ENCA_LANGUAGE_ET, /* Estonian. */
+  // &ENCA_LANGUAGE_HR, /* Croatian. */
+  // &ENCA_LANGUAGE_HU, /* Hungarian. */
+  // &ENCA_LANGUAGE_LT, /* Latvian. */
+  // &ENCA_LANGUAGE_LV, /* Lithuanian. */
+  // &ENCA_LANGUAGE_PL, /* Polish. */
+  // &ENCA_LANGUAGE_RU, /* Russian. */
+  // &ENCA_LANGUAGE_SK, /* Slovak. */
+  // &ENCA_LANGUAGE_SL, /* Slovene. */
+  // &ENCA_LANGUAGE_UK, /* Ukrainian. */
   &ENCA_LANGUAGE_ZH, /* Chinese. */
   &ENCA_LANGUAGE___, /* None. */
 };
