@@ -1,4 +1,4 @@
-﻿#ifndef SUBTITLE_H
+#ifndef SUBTITLE_H
 #define SUBTITLE_H
 
 #ifdef _MSC_VER

@@ -19,7 +19,12 @@ LDFLAGS = $(LIBS)
 
 RM = rm
 
-target = libsubtitle.a
+ifeq ($(PLATFORM), android)
+target = ./output/android/libsubtitle.a
+else
+target = ./output/ios/libsubtitle.a
+endif
+
 CPPSOURCES = $(wildcard *.cpp)
 CPPOBJS := $(subst .cpp,.o,$(CPPSOURCES))
 
@@ -37,7 +42,13 @@ $(target): $(OBJS)
 	@for dir in $(SUBDIRS); \
 		do $(MAKE) -C $$dir all || exit 1;\
 	done
+ifeq ($(PLATFORM), android)
+	$(AR) $@ $^
+	cp $(LIBS) ./output/android/
+	cp ./libiconv/libcharset/libcharset.a ./output/android/
+else
 	$(AR) $@ $(LDFLAGS) $^
+endif
 
 clear:
 	$(RM) -f $(OBJS)
@@ -48,3 +59,4 @@ clear:
 
 info:
 	echo $(OBJS)
+

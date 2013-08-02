@@ -3,9 +3,7 @@ include ../$(PLATFORM).mk
 CFLAGS := $(CFLAGS) -Wall -I./libcharset/include -I./include -Wno-write-strings
 CPPFLAGS := $(CPPFLAGS) -Wall -I. -Wno-write-strings
 
-ifeq ($(PLATFORM), ios)
 CFLAGS += -Wunused-function
-endif
 
 ifeq ($(DEBUG), y)
 CFLAGS += -g
@@ -16,12 +14,17 @@ CPPFLAGS += -O2
 endif
 
 SUBDIRS := libcharset
+
+ifeq ($(PLATFORM), android)
+LDFLAGS = 
+else
 LDFLAGS = libcharset/libcharset.a
+endif
 
 RM = rm
 
 target = libiconv.a
-CSOURCES = lib/genaliases.c lib/genaliases2.c lib/genflags.c lib/gentranslit.c lib/iconv.c
+CSOURCES = lib/iconv.c
 COBJS := $(subst .c,.o,$(CSOURCES))
 
 OBJS = $(CPPOBJS) $(COBJS)
@@ -46,4 +49,4 @@ clear:
 
 info:
 	@echo $(OBJS)
-	@echo $(SUBDIRS)       
+	@echo $(SUBDIRS)
