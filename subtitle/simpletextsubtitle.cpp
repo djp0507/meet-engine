@@ -99,7 +99,7 @@ bool CSimpleTextSubtitle::seekTo(int64_t time)
     size_t nextPos = 0;
     for (size_t i = 0; i < mSegments.size(); ++i, ++nextPos) {
         CSTSSegment* segment = mSegments.at(i);
-        if (segment->mStartTime >= time) {
+        if (segment->mStopTime >= time) {
             break;
         }
     }
