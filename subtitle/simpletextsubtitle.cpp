@@ -82,10 +82,12 @@ bool CSimpleTextSubtitle::LoadFile(const char* fileName)
         }
     }
 
-    // É¾³ý¿Õsegment
+    // åˆ é™¤ç©ºsegment
     for (int i = mSegments.size() - 1; i >= 0; --i) {
         if (mSegments[i]->mSubs.size() <= 0) {
+            CSTSSegment* p = mSegments[i];
             mSegments.erase(mSegments.begin() + i);
+            delete p;
         }
     }
 

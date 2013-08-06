@@ -194,13 +194,18 @@ bool ISubtitles::create(ISubtitles** subtitle)
 }
 
 #ifdef _TEST
+#include <atlbase.h>
+#include <atlconv.h>
+
 int main(int argc, char* argv[])
 {
+    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     ISubtitles* subtitle = NULL;
     if (!ISubtitles::create(&subtitle)) {
         return 0;
     }
-    subtitle->loadSubtitle("gb18030.ass", false);
+    subtitle->loadSubtitle("Arrow.S01E02.720p.HDTV.X264-DIMENSION.chs&eng.简体.srt", false);
     subtitle->seekTo(0);
 
     STSSegment* segment = NULL;
@@ -213,7 +218,7 @@ int main(int argc, char* argv[])
 
         char subtitleText[1024];
         segment->getSubtitleText(subtitleText, 1024);
-        printf("%s\n", subtitleText);
+        printf("%s\n", CW2A(CA2W(subtitleText, CP_UTF8)));
     }
 
     subtitle->close();

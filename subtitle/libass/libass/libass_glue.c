@@ -98,6 +98,38 @@ int strtocolor(ASS_Library *library, char **q, uint32_t *res, int hex)
     return result;
 }
 
+/*
+ * 追加字符串，并且会修改目的缓冲区长度，保证追加成功
+ */
+char* mystrcat(char **dst, size_t* bufferLen, const char* src)
+{
+    char* newDst = NULL;
+    size_t dstLen = 0;
+    size_t srcLen = 0;
+    srcLen = src ? strlen(src) : 0;
+    if (!src) {
+        return *dst;
+    }
+
+    dstLen = *dst ? strlen(*dst) : 0;
+    dstLen += srcLen;
+    if (dstLen + 1 > *bufferLen) {
+        newDst = (char*)realloc(*dst, dstLen*2);
+        if (newDst) {
+            if (!*dst) {
+                newDst[0] = '\0';
+            }
+            *dst = newDst;
+            *bufferLen = dstLen*2;
+        }
+    }
+    if (dstLen + 1 <= *bufferLen) {
+        strcat(*dst, src);
+    }
+
+    return *dst;
+}
+
 #ifdef CONFIG_ENCA
 void *ass_guess_buffer_cp(ASS_Library *library, unsigned char *buffer,
                           int buflen, char *preferred_language,
@@ -142,3 +174,4 @@ void *ass_guess_buffer_cp(ASS_Library *library, unsigned char *buffer,
     return detected_sub_cp;
 }
 #endif
+

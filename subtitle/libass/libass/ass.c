@@ -21,7 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <strings.h>
+#endif
 #include <assert.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -45,7 +47,9 @@ typedef enum {
     PST_INFO,
     PST_STYLES,
     PST_EVENTS,
-    PST_FONTS
+    PST_FONTS,
+    PST_SRT_TIME,
+    PST_SRT_TEXT
 } ParserState;
 
 struct parser_priv {
@@ -54,6 +58,11 @@ struct parser_priv {
     char *fontdata;
     int fontdata_size;
     int fontdata_used;
+    // SRT
+    long long start;
+    long long end;
+    char *srt_text;
+    size_t srt_text_len;
 };
 
 #define ASS_STYLES_ALLOC 20
@@ -96,6 +105,7 @@ void ass_free_track(ASS_Track *track)
     if (track->parser_priv) {
         free(track->parser_priv->fontname);
         free(track->parser_priv->fontdata);
+        free(track->parser_priv->srt_text);
         free(track->parser_priv);
     }
     free(track->style_format);
@@ -239,6 +249,18 @@ static long long string2timecode(ASS_Library *library, char *p)
     }
     tm = ((h * 60 + m) * 60 + s) * 1000 + ms * 10;
     return tm;
+}
+
+static int string2timecode_srt(ASS_Library *library, char *p, long long *start, long long *end)
+{
+    char sep;
+    int hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2;
+    int c = sscanf(p, "%d%c%d%c%d%c%d --> %d%c%d%c%d%c%d", 
+        &hh1, &sep, &mm1, &sep, &ss1, &sep, &ms1,
+        &hh2, &sep, &mm2, &sep, &ss2, &sep, &ms2);
+    if (c == 14) {
+    }
+    return 1;
 }
 
 /**
@@ -768,6 +790,50 @@ static int process_fonts_line(ASS_Track *track, char *str)
     return 0;
 }
 
+/*
+ * \brief Parse srt line
+ * \param track track
+ * \param str string to parse, zero-terminated
+ */
+static int process_srt_line(ASS_Track *track, char *str)
+{
+    switch(track->parser_priv->state) {
+    case PST_UNKNOWN:
+    case PST_SRT_TIME:
+        {
+            char sep;
+            int hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2;
+            int c = sscanf(str, "%d%c%d%c%d%c%d --> %d%c%d%c%d%c%d\n", 
+                &hh1, &sep, &mm1, &sep, &ss1, &sep, &ms1,
+                &hh2, &sep, &mm2, &sep, &ss2, &sep, &ms2);
+            if ( c == 14) {
+                track->parser_priv->start = (((hh1*60 + mm1)*60) + ss1)*1000 + ms1;
+                track->parser_priv->end   = (((hh2*60 + mm2)*60) + ss2)*1000 + ms2;
+                if (track->parser_priv->end > track->parser_priv->start) {
+                    track->parser_priv->state = PST_SRT_TEXT;
+                }
+            }
+        }
+        break;
+    case PST_SRT_TEXT:
+        if (!str || strlen(str) == 0) {
+            int eid;
+            ASS_Event *event;
+
+            eid = ass_alloc_event(track);
+            event = track->events + eid;
+            event->Start = track->parser_priv->start;
+            event->Duration = track->parser_priv->end - track->parser_priv->start;
+            event->Text = ass_remove_format_tag(strdup(track->parser_priv->srt_text));
+            track->parser_priv->srt_text[0] = '\x0';
+            track->parser_priv->state = PST_SRT_TIME;
+        } else {
+            mystrcat(&track->parser_priv->srt_text, &track->parser_priv->srt_text_len, str);
+        }
+        break;
+    }
+    return 0;
+}
 /**
  * \brief Parse a header line
  * \param track track
@@ -775,7 +841,22 @@ static int process_fonts_line(ASS_Track *track, char *str)
 */
 static int process_line(ASS_Track *track, char *str)
 {
-    if (!strncasecmp(str, "[Script Info]", 13)) {
+    if (track->track_type == TRACK_TYPE_UNKNOWN) {
+        if (str && strlen(str) > 0) {
+            char *p = str;
+            // 第一行全部为数字，认为是srt格式
+            while(*p && *p >= '0' && *p <= '9') {
+                p++;
+            }
+            if (*p == '\0') {
+                track->track_type = TRACK_TYPE_SRT;
+            }
+        }
+    }
+
+    if (track->track_type == TRACK_TYPE_SRT) {
+        process_srt_line(track, str);
+    } else if (!strncasecmp(str, "[Script Info]", 13)) {
         track->parser_priv->state = PST_INFO;
     } else if (!strncasecmp(str, "[V4 Styles]", 11)) {
         track->parser_priv->state = PST_STYLES;
@@ -817,20 +898,17 @@ static int process_line(ASS_Track *track, char *str)
 static int process_text(ASS_Track *track, char *str)
 {
     char *p = str;
+    if (p[0] == '\xef' && p[1] == '\xbb' && p[2] == '\xbf') {
+        p += 3;         // U+FFFE (BOM)
+    }
     while (1) {
         char *q;
-        while (1) {
-            if ((*p == '\r') || (*p == '\n'))
-                ++p;
-            else if (p[0] == '\xef' && p[1] == '\xbb' && p[2] == '\xbf')
-                p += 3;         // U+FFFE (BOM)
-            else
-                break;
-        }
         for (q = p; ((*q != '\0') && (*q != '\r') && (*q != '\n')); ++q) {
         };
-        if (q == p)
-            break;
+        if (*q == '\r' && *(q + 1) == '\n') { // windows \r\n 
+            *(q++) = '\0';
+        }
+
         if (*q != '\0')
             *(q++) = '\0';
         process_line(track, p);
@@ -987,8 +1065,14 @@ static char *sub_recode(ASS_Library *library, char *data, size_t size,
 #endif
         if ((icdsc = iconv_open(tocp, cp_tmp)) != (iconv_t) (-1)) {
             ass_msg(library, MSGL_V, "Opened iconv descriptor");
-        } else
+        } else {
             ass_msg(library, MSGL_ERR, "Error opening iconv descriptor");
+        }
+#ifdef CONFIG_ENCA
+        if (cp_tmp != codepage) {
+            free((void*)cp_tmp);
+        }
+#endif
     }
 
     {

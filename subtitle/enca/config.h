@@ -283,3 +283,7 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #define vfork fork
+
+#ifdef _MSC_VER
+#define ssize_t int
+#endif
