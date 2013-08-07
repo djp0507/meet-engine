@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "subtitle", "subtitle.vcxproj", "{078F007D-0AC8-4282-A292-1865FC3487EA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7A74ED4B-2BF5-47D7-B43E-C80F714417FB} = {7A74ED4B-2BF5-47D7-B43E-C80F714417FB}
+		{22B25AEC-7223-46FC-8356-4418327EFDE1} = {22B25AEC-7223-46FC-8356-4418327EFDE1}
+		{BA5B08FC-2ECB-4571-9F25-F8054522FC65} = {BA5B08FC-2ECB-4571-9F25-F8054522FC65}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libass", "libass_win32.vcxproj", "{BA5B08FC-2ECB-4571-9F25-F8054522FC65}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libiconv", "libiconv_win32.vcxproj", "{7A74ED4B-2BF5-47D7-B43E-C80F714417FB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libenca", "libenca_win32.vcxproj", "{22B25AEC-7223-46FC-8356-4418327EFDE1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{078F007D-0AC8-4282-A292-1865FC3487EA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{078F007D-0AC8-4282-A292-1865FC3487EA}.Debug|Win32.Build.0 = Debug|Win32
+		{078F007D-0AC8-4282-A292-1865FC3487EA}.Release|Win32.ActiveCfg = Release|Win32
+		{078F007D-0AC8-4282-A292-1865FC3487EA}.Release|Win32.Build.0 = Release|Win32
+		{BA5B08FC-2ECB-4571-9F25-F8054522FC65}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BA5B08FC-2ECB-4571-9F25-F8054522FC65}.Debug|Win32.Build.0 = Debug|Win32
+		{BA5B08FC-2ECB-4571-9F25-F8054522FC65}.Release|Win32.ActiveCfg = Release|Win32
+		{BA5B08FC-2ECB-4571-9F25-F8054522FC65}.Release|Win32.Build.0 = Release|Win32
+		{7A74ED4B-2BF5-47D7-B43E-C80F714417FB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7A74ED4B-2BF5-47D7-B43E-C80F714417FB}.Debug|Win32.Build.0 = Debug|Win32
+		{7A74ED4B-2BF5-47D7-B43E-C80F714417FB}.Release|Win32.ActiveCfg = Release|Win32
+		{7A74ED4B-2BF5-47D7-B43E-C80F714417FB}.Release|Win32.Build.0 = Release|Win32
+		{22B25AEC-7223-46FC-8356-4418327EFDE1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{22B25AEC-7223-46FC-8356-4418327EFDE1}.Debug|Win32.Build.0 = Debug|Win32
+		{22B25AEC-7223-46FC-8356-4418327EFDE1}.Release|Win32.ActiveCfg = Release|Win32
+		{22B25AEC-7223-46FC-8356-4418327EFDE1}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
