@@ -33,10 +33,19 @@ char parse_bool(char *str)
         return 1;
     return 0;
 }
-double ass_strtod(const char *string, char **endPtr)
+
+int mystrtoi(char **p, int *res)
 {
-    return atof(string);
+    double temp_res;
+    char *start = *p;
+    temp_res = ass_strtod(*p, p);
+    *res = (int) (temp_res + (temp_res > 0 ? 0.5 : -0.5));
+    if (*p != start)
+        return 1;
+    else
+        return 0;
 }
+
 int lookup_style(ASS_Track *track, char *name)
 {
     int i;

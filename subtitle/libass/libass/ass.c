@@ -72,10 +72,12 @@ char* ass_remove_format_tag(char* src)
 {
     char *p1 = src;
     char *p2 = src;
-    
+    int drawing_mode = 0;
+
     if (!src) {
         return src;
     }
+
     while(*p2) {
         int in_tag = 0;
         if (*p2 == '{') {
@@ -83,14 +85,28 @@ char* ass_remove_format_tag(char* src)
             in_tag = 1;
         }
         if (in_tag) {
-            while (*p2 != '}' && *p2 != 0) { ++p2;}
+            while (*p2 != '}' && *p2 != 0) {
+                if (*p2 == '\\' && *(p2 + 1) == 'p'
+                    && (*(p2 + 2) >= '0' && *(p2 + 2) <= '9')) {
+                    int val = 0;
+                    p2 += 2;
+                    if (!mystrtoi(&p2, &val)) {
+                        val = 0;
+                    }
+                    drawing_mode = !!val;
+                }
+                ++p2;
+            }
             if (*p2 == '}') { p2++; }
-            
         } else if (*p2 == '\\' && (*(p2 + 1) == 'n' || *(p2 + 1) == 'N')) {
             *p1++ = '\n';
             p2 += 2;
         } else {
-            *p1++ = *p2++;
+            if (!drawing_mode) {
+                *p1++ = *p2++;
+            } else {
+                p2++;
+            }
         }
     }
     
@@ -674,6 +690,11 @@ static int process_events_line(ASS_Track *track, char *str)
             event_format_fallback(track);
 
         process_event_tail(track, event, str, 0);
+
+        if (strlen(event->Text) == 0) {
+            ass_free_event(track, eid);
+            track->n_events--;
+        }
     } else {
         ass_msg(track->library, MSGL_V, "Not understood: '%.30s'", str);
     }
@@ -827,6 +848,11 @@ static int process_srt_line(ASS_Track *track, char *str)
             event->Text = ass_remove_format_tag(strdup(track->parser_priv->srt_text));
             track->parser_priv->srt_text[0] = '\x0';
             track->parser_priv->state = PST_SRT_TIME;
+            
+            if (strlen(event->Text) == 0) {
+                ass_free_event(track, eid);
+                track->n_events--;
+            }
         } else {
             mystrcat(&track->parser_priv->srt_text, &track->parser_priv->srt_text_len, str);
         }

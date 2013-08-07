@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
     if (!ISubtitles::create(&subtitle)) {
         return 0;
     }
-    subtitle->loadSubtitle("Arrow.S01E02.720p.HDTV.X264-DIMENSION.chs&eng.简体.srt", false);
+    subtitle->loadSubtitle("drawmode.ass", false);
     subtitle->seekTo(0);
 
     STSSegment* segment = NULL;

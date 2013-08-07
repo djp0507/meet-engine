@@ -14,7 +14,7 @@ endif
 RM = rm
 
 target = libass.a
-CSOURCES = libass/ass.c libass/ass_library.c libass/libass_glue.c
+CSOURCES = libass/ass.c libass/ass_library.c libass/libass_glue.c libass/ass_strtod.c
 COBJS := $(subst .c,.o,$(CSOURCES))
 
 OBJS = $(CPPOBJS) $(COBJS)
