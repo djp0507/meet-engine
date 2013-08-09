@@ -16,6 +16,7 @@ typedef struct PlatformInfo {
 
     void* ppbox;
     void* jvm;
+	jobject javaSurface;
 } PlatformInfo;
 
 

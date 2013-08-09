@@ -67,6 +67,8 @@ typedef int (*AUDIOTRACK_getMinFrameCount)(int *, int, unsigned int);
 typedef void (*AUDIOTRACK_ctor)(void *, int, unsigned int, int, int, int, unsigned int, void (*)(int, void *, void *), void *, int, int);
 // _ZN7android10AudioTrackC1EijiiijPFviPvS1_ES1_i
 typedef void (*AUDIOTRACK_ctor_legacy)(void *, int, unsigned int, int, int, int, unsigned int, void (*)(int, void *, void *), void *, int);
+// _ZN7android10AudioTrackC1E19audio_stream_type_tj14audio_format_tji20audio_output_flags_tPFviPvS4_ES4_ii
+typedef void (*AUDIOTRACK_ctor_api18)(void *, int, unsigned int, int, int, int, unsigned int, void (*)(int, void *, void *), void *, int, int);
 // _ZN7android10AudioTrackD1Ev
 typedef void (*AUDIOTRACK_dtor)(void *);
 // _ZNK7android10AudioTrack9initCheckEv
@@ -94,6 +96,7 @@ static AUDIOSYSTEM_getOutputSamplingRate as_getOutputSamplingRate = NULL;
 static AUDIOTRACK_getMinFrameCount at_getMinFrameCount = NULL;
 static AUDIOTRACK_ctor at_ctor = NULL;
 static AUDIOTRACK_ctor_legacy at_ctor_legacy = NULL;
+static AUDIOTRACK_ctor_api18 at_ctor_api18 = NULL;
 static AUDIOTRACK_dtor at_dtor = NULL;
 static AUDIOTRACK_initCheck at_initCheck = NULL;
 static AUDIOTRACK_start at_start = NULL;
@@ -125,6 +128,7 @@ static status_t InitLibrary()
     }
     at_ctor = (AUDIOTRACK_ctor)(dlsym(libmedia, "_ZN7android10AudioTrackC1EijiiijPFviPvS1_ES1_ii"));
     at_ctor_legacy = (AUDIOTRACK_ctor_legacy)(dlsym(libmedia, "_ZN7android10AudioTrackC1EijiiijPFviPvS1_ES1_i"));
+	at_ctor_api18 = (AUDIOTRACK_ctor_api18)(dlsym(libmedia, "_ZN7android10AudioTrackC1E19audio_stream_type_tj14audio_format_tji20audio_output_flags_tPFviPvS4_ES4_ii"));
     at_dtor = (AUDIOTRACK_dtor)(dlsym(libmedia, "_ZN7android10AudioTrackD1Ev"));
     at_initCheck = (AUDIOTRACK_initCheck)(dlsym(libmedia, "_ZNK7android10AudioTrack9initCheckEv"));
     at_start = (AUDIOTRACK_start)(dlsym(libmedia, "_ZN7android10AudioTrack5startEv"));
@@ -134,17 +138,31 @@ static status_t InitLibrary()
     at_pause = (AUDIOTRACK_pause)(dlsym(libmedia, "_ZN7android10AudioTrack5pauseEv"));
     at_latency = (AUDIOTRACK_latency)(dlsym(libmedia, "_ZNK7android10AudioTrack7latencyEv"));
 
-    /* We need the first 3 or the last 1 */
+/*
+    // We need the first 3 or the last 1
     if (!((as_getOutputFrameCount && as_getOutputLatency && as_getOutputSamplingRate)
         || at_getMinFrameCount)) {
         dlclose(libmedia);
+		LOGI("as_getOutputFrameCount:%d", as_getOutputFrameCount!=NULL);
+		LOGI("as_getOutputLatency:%d", as_getOutputLatency!=NULL);
+		LOGI("as_getOutputSamplingRate:%d", as_getOutputSamplingRate!=NULL);
+		LOGI("at_getMinFrameCount:%d", at_getMinFrameCount!=NULL);
         return ERROR;
     }
-
+*/
     // We need all the other Symbols
-    if (!((at_ctor || at_ctor_legacy) && at_dtor && at_initCheck &&
+    if (!((at_ctor || at_ctor_legacy || at_ctor_api18) && at_dtor &&
            at_start && at_stop && at_write && at_flush)) {
         dlclose(libmedia);
+		LOGI("at_ctor:%d", at_ctor!=NULL);
+		LOGI("at_ctor_legacy:%d", at_ctor_legacy!=NULL);
+		LOGI("at_ctor_api18:%d", at_ctor_api18!=NULL);
+		LOGI("at_dtor:%d", at_dtor!=NULL);
+		LOGI("at_initCheck:%d", at_initCheck!=NULL);
+		LOGI("at_start:%d", at_start!=NULL);
+		LOGI("at_stop:%d", at_stop!=NULL);
+		LOGI("at_write:%d", at_write!=NULL);
+		LOGI("at_flush:%d", at_flush!=NULL);
         return ERROR;
     }
     return OK;
@@ -225,9 +243,9 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, AVSampleFormat 
     LOGD("audio output format: %d", format);
     
     int32_t stream_type = MUSIC;
-
-    /* Get the minimum buffer value */
-    int32_t status, size;
+/*
+    // Get the minimum buffer value
+    int32_t size;
     int32_t afSampleRate, afFrameCount, afLatency, minBufCount, minFrameCount;
     if (!at_getMinFrameCount) {
         status = as_getOutputSamplingRate(&afSampleRate, stream_type);
@@ -252,7 +270,7 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, AVSampleFormat 
     }
 
     size = minFrameCount * (channel >= CHANNEL_OUT_STEREO ? 2 : 1);// * 4;
-
+*/
     /* Sizeof(AudioTrack) == 0x58 (not sure) on 2.2.1, this should be enough */
     AudioTrack = malloc(SIZE_OF_AUDIOTRACK);
     if (!AudioTrack)
@@ -260,11 +278,19 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, AVSampleFormat 
 
     *((uint32_t *) ((uint32_t)AudioTrack + SIZE_OF_AUDIOTRACK - 4)) = 0xbaadbaad;
     // Higher than android 2.2
-    if (at_ctor)
-        at_ctor(AudioTrack, stream_type, rate, format, channel, size, 0, NULL, NULL, 0, 0);
+    if (at_ctor != NULL)
+    {
+        at_ctor(AudioTrack, stream_type, rate, format, channel, 0, 0, NULL, NULL, 0, 0);
+    }
     // Higher than android 1.6
-    else if (at_ctor_legacy)
-        at_ctor_legacy(AudioTrack, stream_type, rate, format, channel, size, 0, NULL, NULL, 0);
+    else if (at_ctor_legacy != NULL)
+    {
+        at_ctor_legacy(AudioTrack, stream_type, rate, format, channel, 0, 0, NULL, NULL, 0);
+    }
+	else if(at_ctor_api18 != NULL)
+	{
+		at_ctor_api18(AudioTrack, stream_type, rate, format, channel, 0, 0, NULL, NULL, 0, 0);
+	}
 
     if( (*((uint32_t *) ((uint32_t)AudioTrack + SIZE_OF_AUDIOTRACK - 4)) != 0xbaadbaad) )
     {
@@ -273,15 +299,19 @@ status_t AudioTrack_open(int sampleRate, uint64_t channelLayout, AVSampleFormat 
         return ERROR;
     }
     
-    /* And Init */
-    status = at_initCheck(AudioTrack);
-
+    int32_t status = 0;
+	if(at_initCheck != NULL)
+	{
+    	status = at_initCheck(AudioTrack);
+	}
+	
     /* android 1.6 uses channel count instead of stream_type */
-    if (status != 0) {
+    if (status != 0 && at_ctor_legacy != NULL) {
         channel = (channel == CHANNEL_OUT_STEREO) ? 2 : 1;
-        at_ctor_legacy(AudioTrack, stream_type, rate, format, channel, size, 0, NULL, NULL, 0);
+        at_ctor_legacy(AudioTrack, stream_type, rate, format, channel, 0, 0, NULL, NULL, 0);
         status = at_initCheck(AudioTrack);
     }
+	
     if (status != 0) {
         LOGE("Cannot create AudioTrack!");
         free(AudioTrack);

@@ -36,12 +36,14 @@ static FFPlayer* sPlayer = NULL;
 #include <jni.h>
 #include "platforminfo.h"
 JavaVM* gs_jvm = NULL;
+jobject gs_androidsurface = NULL; 
+PlatformInfo* platformInfo = NULL;
 #endif
 
 extern "C" IPlayer* getPlayer(void* context)
 {
 #ifdef OS_ANDROID
-    PlatformInfo* platformInfo = (PlatformInfo*)context;
+    platformInfo = (PlatformInfo*)context;
 	gs_jvm = (JavaVM*)(platformInfo->jvm);
 #endif
 	return new FFPlayer();
@@ -646,6 +648,10 @@ status_t FFPlayer::setDataSource(int32_t fd, int64_t offset, int64_t length)
 
 status_t FFPlayer::setVideoSurface(void* surface)
 {
+#ifdef OS_ANDROID
+    gs_androidsurface = platformInfo->javaSurface;
+#endif
+
     if(mPlayerStatus != MEDIA_PLAYER_IDLE &&
         mPlayerStatus != MEDIA_PLAYER_INITIALIZED)
     {
