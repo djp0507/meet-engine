@@ -1,6 +1,8 @@
 #ifndef PLATFORMINFO_H_
 #define PLATFORMINFO_H_
 
+#include <jni.h>
+
 #define STRLEN 200
 
 typedef struct PlatformInfo {
