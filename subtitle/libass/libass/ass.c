@@ -854,6 +854,11 @@ static int process_srt_line(ASS_Track *track, char *str)
                 track->n_events--;
             }
         } else {
+            if (track->parser_priv->srt_text
+                && track->parser_priv->srt_text[0] != '\x0') {
+                    mystrcat(&track->parser_priv->srt_text, &track->parser_priv->srt_text_len, "\\N");
+            }
+
             mystrcat(&track->parser_priv->srt_text, &track->parser_priv->srt_text_len, str);
         }
         break;
