@@ -43,7 +43,8 @@ public:
 		TYPE_HTTP,
 		TYPE_UNKNOWN
 	};
-
+	
+	status_t selectAudioChannel(int32_t index);
 	AVFormatContext* open(char* uri);
 	status_t start();
 	status_t stop();
@@ -87,6 +88,7 @@ private:
 	URL_TYPE mUrlType;
 	
 	//audio
+	int32_t mAudioChannelSelected;
 	int32_t mAudioStreamIndex;
 	AVStream* mAudioStream;
     PacketQueue mAudioQueue;

@@ -31,6 +31,9 @@ typedef struct MediaInfo {
 	//	cht:tranditional chinese
 	const char* audio_languages[CHANNELS_MAX];
 
+	//all channels count, include audio / video /subtitle
+	int32_t channels;
+
     MediaInfo() :
         duration_ms(0),
         size_byte(0),
@@ -43,7 +46,8 @@ typedef struct MediaInfo {
         thumbnail_height(0),
         thumbnail(NULL),
         audio_channels(0),
-        video_channels(0)
+        video_channels(0),
+        channels(0)
         {}
     
 } MediaInfo;
@@ -114,6 +118,7 @@ public:
 	virtual status_t stop() = 0;
 	virtual status_t pause() = 0;
 	virtual status_t seekTo(int msec) = 0;
+	virtual status_t selectAudioChannel(int32_t index){return false;} 
 
 	//播放器状态回调接口
 	virtual status_t setListener(MediaPlayerListener* listener) = 0;

@@ -44,6 +44,7 @@ FFStream::FFStream()
 
     mAudioStream = NULL;
     mVideoStream = NULL;
+    mAudioChannelSelected = -1;
 	mAudioStreamIndex = -1;
 	mVideoStreamIndex = -1;
     mStreamsCount = 0;
@@ -72,6 +73,12 @@ FFStream::~FFStream()
     //pthread_mutex_destroy(&mVideoQueueLock);
     pthread_cond_destroy(&mCondition);
     pthread_mutex_destroy(&mLock);
+}
+
+status_t FFStream::selectAudioChannel(int32_t index)
+{
+    mAudioChannelSelected = index;
+    return OK;
 }
 
 AVFormatContext* FFStream::open(char* uri)
@@ -137,7 +144,7 @@ AVFormatContext* FFStream::open(char* uri)
     {
 		if (mMovieFile->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
         {
-            if(mAudioStreamIndex == -1)
+            if(mAudioStreamIndex == -1 && (mAudioChannelSelected==-1 || mAudioChannelSelected==i))
             {
     		    mAudioStreamIndex = i;
                 LOGD("mAudioStreamIndex:%d", mAudioStreamIndex);
@@ -145,7 +152,7 @@ AVFormatContext* FFStream::open(char* uri)
             }
             else
             {
-                //Disable variant streams, like m3u8
+                //by default, use the first audio stream, and discard others.
                 mMovieFile->streams[i]->discard = AVDISCARD_ALL;
                 LOGI("Discard audio stream:%d", i);
             }
@@ -172,7 +179,7 @@ AVFormatContext* FFStream::open(char* uri)
                 }
                 else
                 {
-                    //Disable variant streams, like m3u8
+                    //by default, use the first video stream, and discard others.
                     mMovieFile->streams[j]->discard = AVDISCARD_ALL;
                     LOGI("Discard video stream:%d", j);
                 }

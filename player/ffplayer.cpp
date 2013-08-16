@@ -507,6 +507,7 @@ FFPlayer::FFPlayer()
     mVideoPlayingTimeMs = 0;
 
     mUri = NULL;
+    mAudioChannelSelected = -1;
     mDataStream = NULL;
     mAudioPlayer = NULL;
     mAudioStream = NULL;
@@ -644,6 +645,12 @@ status_t FFPlayer::setDataSource(const char *uri)
 status_t FFPlayer::setDataSource(int32_t fd, int64_t offset, int64_t length)
 {
     return INVALID_OPERATION;
+}
+
+status_t FFPlayer::selectAudioChannel(int32_t index)
+{
+    mAudioChannelSelected = index;
+    return OK;
 }
 
 status_t FFPlayer::setVideoSurface(void* surface)
@@ -2622,6 +2629,9 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
 
             uint32_t streamsCount = movieFile->nb_streams;
             LOGD("streamsCount:%d", streamsCount);
+            
+            info->channels = streamsCount;
+            memset(info->audio_languages, 0, CHANNELS_MAX);
 
             info->audio_channels = 0;
             info->video_channels = 0;
@@ -2640,7 +2650,7 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
                         	if (codec != NULL)
                             {
                                 info->audio_name = codec->name;
-                                getAudioLanguages(info->audio_languages, info->audio_channels-1, stream);
+                                getAudioLanguages(info->audio_languages, i, stream);
                             }
                         }
                     }
