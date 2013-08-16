@@ -2575,6 +2575,24 @@ bool generateThumbnail(AVFrame* videoFrame,
     return result;
 }
 
+bool getAudioLanguages(const char** lang, int32_t index, AVStream* stream)
+{
+    if(index < CHANNELS_MAX && stream != NULL && stream->metadata != NULL)
+    {
+        AVDictionaryEntry* elem = av_dict_get(stream->metadata, "language", NULL, 0);
+        if(elem != NULL)
+        {
+            lang[index] = elem->value;
+            if(lang[index] != NULL)
+            {
+                LOGI("audio index:%d -> language:%s", index, lang[index]);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
 {
     if(url == NULL || info == NULL) return false;
@@ -2622,6 +2640,7 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
                         	if (codec != NULL)
                             {
                                 info->audio_name = codec->name;
+                                getAudioLanguages(info->audio_languages, info->audio_channels-1, stream);
                             }
                         }
                     }

@@ -2,6 +2,9 @@
 #define IPLAYER_H
 
 #include "errors.h"
+
+#define CHANNELS_MAX 100
+
 //视频媒体信息
 typedef struct MediaInfo {
 	int32_t duration_ms; //in millisecond 
@@ -17,6 +20,16 @@ typedef struct MediaInfo {
 	int32_t* thumbnail;
 	int32_t audio_channels;
 	int32_t video_channels;
+	
+	//we do not use dynamic mem alloc, for easy mem management.
+	//use the ISO 639 language code (3 letters)
+	//for detail, refer to http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+	//chinese language needs to map this logic:
+	//	chi:chinese
+	//	zho:chinese
+	//	chs:simplified chinese
+	//	cht:tranditional chinese
+	const char* audio_languages[CHANNELS_MAX];
 
     MediaInfo() :
         duration_ms(0),
