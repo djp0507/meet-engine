@@ -32,7 +32,6 @@ static char* query;
 static char* protocol;
 static int status;
 static off_t bytes;
-static char* req_hostname;
 static char* authorization;
 static size_t content_length;
 static char* content_type;
@@ -50,15 +49,6 @@ static void handle_request( void );
 static void de_dotdot( char* file );
 static int get_pathinfo( void );
 static void do_file( void );
-static void do_dir( void );
-static char* file_details( const char* dir, const char* name );
-static void strencode( char* to, size_t tosize, const char* from );
-static char** make_envp( void );
-static void auth_check( char* dirname );
-static void send_authenticate( char* realm );
-static void send_error( int s, char* title, char* extra_header, char* text );
-static void send_error_body( int s, char* title, char* text );
-static void send_error_tail( void );
 static void add_headers( int s, char* title, char* extra_header, char* me, char* mt, off_t b, time_t mod );
 static void start_request( void );
 static void add_to_request( char* str, size_t len );
@@ -75,11 +65,8 @@ static char* ntoa( usockaddr* usaP );
 static size_t sockaddr_len( usockaddr* usaP );
 static void strdecode( char* to, char* from );
 static int b64_decode( const char* str, unsigned char* space, int size );
-static void set_ndelay( int fd );
-static void clear_ndelay( int fd );
 static void* e_malloc( size_t size );
 static void* e_realloc( void* optr, size_t size );
-static char* e_strdup( char* ostr );
 
 void init_http_host(HostParameter *host_parameter)
 {
@@ -108,8 +95,8 @@ void init_http_host(HostParameter *host_parameter)
         (void) fprintf( stderr, "can't chdir\n");
         return;
     }
-    init_mime();    
-    /* Main loop. */
+    init_mime();
+    /******** Main loop ********/
     for (;;)
 	{
         FD_ZERO( &lfdset );
@@ -122,10 +109,10 @@ void init_http_host(HostParameter *host_parameter)
 	    }
         if ( select( maxfd + 1, &lfdset, (fd_set*) 0, (fd_set*) 0, (struct timeval*) 0 ) < 0 )
 	    {
-            if ( errno == EINTR || errno == EAGAIN )continue;	/* try again */
+            if ( errno == EINTR || errno == EAGAIN )continue;
             return;
 	    }
-        /* Accept the new connection. */
+        /******** Accept the new connection ********/
         sz = sizeof(usa);
         if ( listenfd != -1 && FD_ISSET( listenfd, &lfdset ) )
             conn_fd = accept( listenfd, &usa.sa, &sz);
@@ -136,11 +123,11 @@ void init_http_host(HostParameter *host_parameter)
 	    }
         if ( conn_fd < 0 )
 	    {
-            if ( errno == EINTR || errno == EAGAIN )continue;	/* try again */
+            if ( errno == EINTR || errno == EAGAIN )continue;
             return;
 	    }
-            client_addr = usa;
-            handle_request();
+        client_addr = usa;
+        handle_request();
         (void) close( conn_fd );
 	}
 }
@@ -169,46 +156,12 @@ static int initialize_listen_socket( usockaddr* usaP )
         return -1;
 	}
     
-    if ( listen( listen_fd, 10 ) < 0 )
+    if ( listen( listen_fd, 1 ) < 0 )
 	{
         (void) fprintf(stderr, "listen socket failed\n");
         return -1;
 	}
-    
     return listen_fd;
-}
-
-static void handle_sigterm( int sig )
-{
-    (void) fprintf( stderr, "exiting due to signal %d\n", sig );
-    return;
-}
-
-static void handle_sighup( int sig )
-{
-    const int oerrno = errno;
-    errno = oerrno;
-}
-
-static void handle_sigchld( int sig )
-{
-    const int oerrno = errno;
-    pid_t pid;
-    int status;    
-    /* Reap defunct children until there aren't any more. */
-    for (;;)
-	{
-        pid = waitpid( (pid_t) -1, &status, WNOHANG );
-        if ( (int) pid == 0 )		/* none left */
-            break;
-        if ( (int) pid < 0 )
-	    {
-            if ( errno == EINTR || errno == EAGAIN )continue;
-            break;
-	    }
-	}   
-    /* Restore previous errno. */
-    errno = oerrno;
 }
 
 struct mime_entry
@@ -219,18 +172,31 @@ struct mime_entry
     size_t val_len;
 };
 static struct mime_entry enc_tab[] = {
-#include "mime_encodings.h"
+    { "Z", 0, "compress", 0 },
+    { "gz", 0, "gzip", 0 },
+    { "uu", 0, "x-uuencode", 0 },
 };
 static const int n_enc_tab = sizeof(enc_tab) / sizeof(*enc_tab);
 static struct mime_entry typ_tab[] = {
-#include "mime_types.h"
+    { "avi", 0, "video/x-msvideo", 0 },
+    { "m3u", 0, "audio/x-mpegurl", 0 },
+    { "m3u8", 0, "audio/x-mpegurl", 0 },
+    { "mov", 0, "video/quicktime", 0 },
+    { "mp4", 0, "video/mp4", 0 },
+    { "mpeg", 0, "video/mpeg", 0 },
+    { "ogg", 0, "application/x-ogg", 0 },
+    { "rm", 0, "audio/x-pn-realaudio", 0 },
+    { "rmvb", 0, "audio/x-pn-realaudio", 0 },
+    { "wm", 0, "video/x-ms-wm", 0 },
+    { "wma", 0, "audio/x-ms-wma", 0 },
+    { "wmv", 0, "video/x-ms-wmv", 0 },
 };
 static const int n_typ_tab = sizeof(typ_tab) / sizeof(*typ_tab);
 
 
 int ext_compare( const void *a, const void *b )
 {
-        return * ( int * ) a - * ( int * ) b;
+    return * ( int * ) a - * ( int * ) b;
 }
 
 static void init_mime( void )
@@ -252,30 +218,6 @@ static void init_mime( void )
         typ_tab[i].val_len = strlen( typ_tab[i].val );
 	}
 }
-
-static void send_error( int s, char* title, char* extra_header, char* text )
-{
-    add_headers(s, title, extra_header, "", "text/html; charset=%s", (off_t) -1, (time_t) -1 );
-    
-    send_error_tail();
-    
-    send_response();
-
-}
-
-static void send_error_tail( void )
-{
-    char buf[500];
-    int buflen;
-    buflen = snprintf( buf, sizeof(buf), "\
-                      <HR>\n\
-                      <ADDRESS><A HREF=\"%s\">%s</A></ADDRESS>\n\
-                      </BODY>\n\
-                      </HTML>\n",
-                      SERVER_URL, SERVER_SOFTWARE );
-    add_to_response( buf, buflen );
-}
-
 
 static void add_headers( int s, char* title, char* extra_header, char* me, char* mt, off_t b, time_t mod )
 {
@@ -339,31 +281,25 @@ static void handle_request( void )
     char* method_str;
     char* line;
     char* cp;
-    int r, file_len, i;
-    const char* index_names[] = {"index.html", "index.htm", "index.xhtml", "index.xht", "Default.htm","index.cgi"};    
+    int r, file_len;  
     remoteuser = (char*) 0;
     method = METHOD_UNKNOWN;
     path = (char*) 0;
     file = (char*) 0;
     pathinfo = (char*) 0;
-    query = "";
+    query = (char *)"";
     protocol = (char*) 0;
     status = 0;
     bytes = -1;
-    req_hostname = (char*) 0;    
     authorization = (char*) 0;
     content_type = (char*) 0;
     content_length = -1;
     cookie = (char*) 0;
     host = (char*) 0;
     if_modified_since = (time_t) -1;
-    referer = "";
-    useragent = "";
-    
-#ifdef TCP_NOPUSH
-    r = 1;
-    (void) setsockopt(conn_fd, IPPROTO_TCP, TCP_NOPUSH, (void*) &r, sizeof(r) );
-#endif
+    referer = (char *)"";
+    useragent = (char *)"";
+
     /* Read in the request. */
     start_request();
     for (;;)
@@ -381,13 +317,13 @@ static void handle_request( void )
     (void) fprintf(stderr, "%s\n",method_str);
     if ( method_str == (char*) 0 )
     {
-        send_error( 400, "Bad Request", "", "Can't parse request." );
+        (void) fprintf(stderr, "400, Bad Request, Can't parse request\n");
         return;
     }
     path = strpbrk( method_str, " \t\012\015" );
     if ( path == (char*) 0 )
     {
-        send_error( 400, "Bad Request", "", "Can't parse request." );
+        (void) fprintf(stderr, "400, Bad Request, Can't parse request\n");
         return;
     }
     *path++ = '\0';
@@ -395,13 +331,13 @@ static void handle_request( void )
     protocol = strpbrk( path, " \t\012\015" );
     if ( protocol == (char*) 0 )
     {
-        send_error( 400, "Bad Request", "", "Can't parse request." );
+        (void) fprintf(stderr, "400, Bad Request, Can't parse request\n");
         return;
     }
     *protocol++ = '\0';
     protocol += strspn( protocol, " \t\012\015" );
     query = strchr( path, '?' );
-    if ( query == (char*) 0 )query = "";
+    if ( query == (char*) 0 )query = (char *)"";
     else *query++ = '\0';
     
     /* Parse the rest of the request headers. */
@@ -445,7 +381,7 @@ static void handle_request( void )
             (void) fprintf(stderr, "host:%s\n",host);
             if ( strchr( host, '/' ) != (char*) 0 || host[0] == '.' )
             {
-                send_error( 400, "Bad Request", "", "Can't parse request." );
+                (void) fprintf(stderr, "400, Bad Request, Can't parse request\n");
                 return;
             }
 	    }
@@ -473,22 +409,22 @@ static void handle_request( void )
         method = METHOD_POST;
     else
     {
-        send_error( 501, "Not Implemented", "", "That method is not implemented." );
+        (void) fprintf(stderr, "501, Not Implemented, That method is not implemented\n");
         return;
     }
     strdecode( path, path );
     if ( path[0] != '/' )
     {
-        send_error( 400, "Bad Request", "", "Bad filename." );
+        (void) fprintf(stderr, "400, Bad Request, Bad filename\n");
         return;
     }
     file = &(path[1]);
     de_dotdot( file );
     if ( file[0] == '\0' )
-        file = "./";
+        file = (char *)"./";
     if ( file[0] == '/' ||( file[0] == '.' && file[1] == '.' &&( file[2] == '\0' || file[2] == '/' ) ) )
     {
-        send_error( 400, "Bad Request", "", "Illegal filename." );
+        (void) fprintf(stderr, "400, Bad Request, Illegal filename\n");
         return;
     }
     r = stat( file, &sb );
@@ -496,7 +432,7 @@ static void handle_request( void )
         r = get_pathinfo();
     if ( r < 0 )
     {
-        send_error( 404, "Not Found", "", "File not found." );
+        (void) fprintf(stderr, "404, Not Found, File not found\n");
         return;
     }
     file_len = strlen( file );
@@ -510,38 +446,6 @@ static void handle_request( void )
 	    }
         do_file();
 	}
-    else
-	{
-        char idx[10000];
-        
-        /* The filename is a directory.  Is it missing the trailing slash? */
-        if ( file[file_len - 1] != '/' && pathinfo == (char*) 0 )
-	    {
-            char location[10000];
-            if ( query[0] != '\0' )
-                (void) snprintf(location, sizeof(location), "Location: %s/?%s", path,query );
-            else
-                (void) snprintf(location, sizeof(location), "Location: %s/", path );
-            send_error( 302, "Found", location, "Directories must end with a slash." );
-	    }
-        
-        /* Check for an index file. */
-        for ( i = 0; i < sizeof(index_names) / sizeof(char*); ++i )
-	    {
-            (void) snprintf( idx, sizeof(idx), "%s%s", file, index_names[i] );
-            if ( stat( idx, &sb ) >= 0 )
-            {
-                file = idx;
-                do_file();
-                goto got_one;
-            }
-	    }
-        
-        /* Nope, no index file, so it's an actual directory request. */
-        do_dir();
-        
-	got_one: ;
-	}
 }
 
 static size_t sockaddr_len( usockaddr* usaP )
@@ -551,7 +455,7 @@ static size_t sockaddr_len( usockaddr* usaP )
         case AF_INET:
             return sizeof(struct sockaddr_in);
         default:
-            return 0;	/* shouldn't happen */
+            return 0;
     }
 }
 
@@ -619,21 +523,6 @@ static void add_to_buf( char** bufP, size_t* bufsizeP, size_t* buflenP, char* st
     (*bufP)[*buflenP] = '\0';
 }
 
-/* Clear NDELAY mode on a socket. */
-static void clear_ndelay( int fd )
-{
-    int flags, newflags;
-    
-    flags = fcntl( fd, F_GETFL, 0 );
-    if ( flags != -1 )
-	{
-        newflags = flags & ~ (int) O_NDELAY;
-        if ( newflags != flags )
-            (void) fcntl( fd, F_SETFL, newflags );
-	}
-}
-
-
 static void* e_malloc( size_t size )
 {
     void* ptr;
@@ -657,19 +546,6 @@ static void* e_realloc( void* optr, size_t size )
     return ptr;
 }
 
-
-static char* e_strdup( char* ostr )
-{
-    char* str;
-    
-    str = strdup( ostr );
-    if ( str == (char*) 0 )
-	{
-        (void) fprintf( stderr, "out of memory copying a string\n");
-	}
-    return str;
-}
-
 static void send_response( void )
 {
     write( conn_fd, response, response_len );
@@ -679,10 +555,10 @@ static char* get_method_str( int m )
 {
     switch ( m )
 	{
-        case METHOD_GET: return "GET";
-        case METHOD_HEAD: return "HEAD";
-        case METHOD_POST: return "POST";
-        default: return "UNKNOWN";
+        case METHOD_GET: return (char *)"GET";
+        case METHOD_HEAD: return (char *)"HEAD";
+        case METHOD_POST: return (char *)"POST";
+        default: return (char *)"UNKNOWN";
 	}
 }
 
@@ -785,145 +661,38 @@ static void do_file( void )
     /* Check authorization for this directory. */
     (void) strncpy( buf, file, sizeof(buf) );
     cp = strrchr( buf, '/' );
-    if ( cp == (char*) 0 )
-        (void) strcpy( buf, "." );
-    else
-        *cp = '\0';
-    auth_check( buf );
-    
-    /* Check if the filename is the AUTH_FILE itself - that's verboten. */
-    if ( strcmp( file, AUTH_FILE ) == 0 ||
-        ( strcmp( &(file[strlen(file) - sizeof(AUTH_FILE) + 1]), AUTH_FILE ) == 0 &&
-         file[strlen(file) - sizeof(AUTH_FILE)] == '/' ) )
-	{
-        send_error( 403, "Forbidden", "", "File is protected." );
-        return;
-	}
+    if ( cp == (char*) 0 )(void) strcpy( buf, "." );
+    else *cp = '\0';
     
     if ( pathinfo != (char*) 0 )
     {
-        send_error( 404, "Not Found", "", "File not found." );
+        (void) fprintf(stderr, "404, Not Found, File not found\n");
         return;
     }
     
     fd = open( file, O_RDONLY );
     if ( fd < 0 )
 	{
-        send_error( 403, "Forbidden", "", "File is protected." );
+        (void) fprintf(stderr, "403, Forbidden, File is protected\n");
 	}
     mime_type = figure_mime( file, mime_encodings, sizeof(mime_encodings) );
     (void) snprintf(fixed_mime_type, sizeof(fixed_mime_type), mime_type, charset );
     if ( if_modified_since != (time_t) -1 && if_modified_since >= sb.st_mtime )
 	{
-        add_headers(304, "Not Modified", "", mime_encodings, fixed_mime_type,(off_t) -1, sb.st_mtime );
+        add_headers(304, (char *)"Not Modified", (char *)"", mime_encodings, fixed_mime_type,(off_t) -1, sb.st_mtime );
         send_response();
         return;
 	}
-    add_headers(200, "Ok", "", mime_encodings, fixed_mime_type, sb.st_size,sb.st_mtime );
+    add_headers(200, (char *)"Ok", (char *)"", mime_encodings, fixed_mime_type, sb.st_size,sb.st_mtime );
     send_response();
     if ( method == METHOD_HEAD )return;
     
-    if ( sb.st_size > 0 )	/* ignore zero-length files */
+    if ( sb.st_size > 0 )
 	{
         fprintf(stderr, "size:%lld\n",sb.st_size);
         send_via_write( fd, sb.st_size );
 	}
     (void) close( fd );
-}
-
-static void auth_check( char* dirname )
-{
-    char authpath[10000];
-    struct stat sb;
-    char authinfo[500];
-    char* authpass;
-    char* colon;
-    static char line[10000];
-    int l;
-    FILE* fp;
-    char* cryp;
-    
-    /* Construct auth filename. */
-    if ( dirname[strlen(dirname) - 1] == '/' )
-        (void) snprintf( authpath, sizeof(authpath), "%s%s", dirname, AUTH_FILE );
-    else
-        (void) snprintf( authpath, sizeof(authpath), "%s/%s", dirname, AUTH_FILE );
-    
-    /* Does this directory have an auth file? */
-    if ( stat( authpath, &sb ) < 0 )
-	/* Nope, let the request go through. */
-        return;
-    
-    /* Does this request contain authorization info? */
-    if ( authorization == (char*) 0 )
-	/* Nope, return a 401 Unauthorized. */
-        send_authenticate( dirname );
-    
-    /* Basic authorization info? */
-    if ( strncmp( authorization, "Basic ", 6 ) != 0 )
-        send_authenticate( dirname );
-    
-    /* Decode it. */
-    l = b64_decode(&(authorization[6]), (unsigned char*) authinfo, sizeof(authinfo) - 1 );
-    authinfo[l] = '\0';
-    /* Split into user and password. */
-    authpass = strchr( authinfo, ':' );
-    if ( authpass == (char*) 0 )
-	/* No colon?  Bogus auth info. */
-        send_authenticate( dirname );
-    *authpass++ = '\0';
-    /* If there are more fields, cut them off. */
-    colon = strchr( authpass, ':' );
-    if ( colon != (char*) 0 )
-        *colon = '\0';
-    
-    /* Open the password file. */
-    fp = fopen( authpath, "r" );
-    if ( fp == (FILE*) 0 )
-	{
-        send_error( 403, "Forbidden", "", "File is protected." );
-	}
-    
-    /* Read it. */
-    while ( fgets( line, sizeof(line), fp ) != (char*) 0 )
-	{
-        /* Nuke newline. */
-        l = strlen( line );
-        if ( line[l - 1] == '\n' )
-            line[l - 1] = '\0';
-        /* Split into user and encrypted password. */
-        cryp = strchr( line, ':' );
-        if ( cryp == (char*) 0 )
-            continue;
-        *cryp++ = '\0';
-        /* Is this the right user? */
-        if ( strcmp( line, authinfo ) == 0 )
-	    {
-            /* Yes. */
-            (void) fclose( fp );
-            /* So is the password right? */
-            if ( strcmp( crypt( authpass, cryp ), cryp ) == 0 )
-            {
-                /* Ok! */
-                remoteuser = line;
-                return;
-            }
-            else
-            /* No. */
-                send_authenticate( dirname );
-	    }
-	}
-    
-    /* Didn't find that user.  Access denied. */
-    (void) fclose( fp );
-    send_authenticate( dirname );
-}
-
-static void send_authenticate( char* realm )
-{
-    char header[10000];    
-    (void) snprintf(header, sizeof(header), "WWW-Authenticate: Basic realm=\"%s\"", realm );
-    send_error( 401, "Unauthorized", header, "Authorization required." );
 }
 
 static int hexit( char c )
@@ -1105,101 +874,15 @@ static void send_via_write( int fd, off_t size )
 	{
         size_t size_size = (size_t) size;
         void* ptr = mmap( 0, size_size, PROT_READ, MAP_PRIVATE, fd, 0 );
-         fprintf(stderr, "errno = %d\n",errno);
         if ( ptr != (void*) -1 )
 	    {
-            write( conn_fd, ptr, size_size );
+            write( conn_fd, ptr, size_size);
             (void) munmap( ptr, size_size );
-	    }
-        (void) madvise( ptr, size_size, MADV_SEQUENTIAL );
-	}
-    else
-	{
-        /* mmap can't deal with files larger than 2GB. */
-        char buf[30000];
-        ssize_t r, r2;
-        
-        for (;;)
-	    {
-            r = read( fd, buf, sizeof(buf) );
-            if ( r < 0 && ( errno == EINTR || errno == EAGAIN ) )
-            {
-                sleep( 1 );
-                continue;
-            }
-            if ( r <= 0 )
-                return;
-            for (;;)
-            {
-                r2 = write( conn_fd, buf, r);
-                if ( r2 < 0 && ( errno == EINTR || errno == EAGAIN ) )
-                {
-                    sleep( 1 );
-                    continue;
-                }
-                if ( r2 != r )
-                    return;
-                break;
-            }
-	    }
+	    }        
 	}
 }
 
-static void do_dir( void )
+void close_host()
 {
-    char buf[10000];
-    size_t buflen;
-    char* contents;
-    size_t contents_size, contents_len;
-
-    char command[10000];
-    FILE* fp;
-    
-    if ( pathinfo != (char*) 0 )
-        send_error( 404, "Not Found", "", "File not found." );
-    
-    /* Check authorization for this directory. */
-    auth_check( file );
-    
-    contents_size = 0;
-    buflen = snprintf( buf, sizeof(buf), "\
-                      <HTML>\n\
-                      <HEAD><TITLE>Index of %s</TITLE></HEAD>\n\
-                      <BODY BGCOLOR=\"#99cc99\" TEXT=\"#000000\" LINK=\"#2020ff\" VLINK=\"#4040cc\">\n\
-                      <H4>Index of %s</H4>\n\
-                      <PRE>\n",
-                      file, file );
-    add_to_buf( &contents, &contents_size, &contents_len, buf, buflen );
-    
-    if ( strchr( file, '\'' ) == (char*) 0 )
-	{
-        (void) snprintf(
-                        command, sizeof(command),
-                        "ls -lgF '%s' | tail +2 | sed -e 's/^\\([^ ][^ ]*\\)\\(  *[^ ][^ ]*  *[^ ][^ ]*  *[^ ][^ ]*\\)\\(  *[^ ][^ ]*\\)  *\\([^ ][^ ]*  *[^ ][^ ]*  *[^ ][^ ]*\\)  *\\(.*\\)$/\\1 \\3  \\4  |\\5/' -e '/ -> /!s,|\\([^*]*\\)$,|<A HREF=\"\\1\">\\1</A>,' -e '/ -> /!s,|\\(.*\\)\\([*]\\)$,|<A HREF=\"\\1\">\\1</A>\\2,' -e '/ -> /s,|\\([^@]*\\)\\(@* -> \\),|<A HREF=\"\\1\">\\1</A>\\2,' -e 's/|//'",
-                        file );
-        fp = popen( command, "r" );
-        for (;;)
-	    {
-            size_t r;
-            r = fread( buf, 1, sizeof(buf), fp );
-            if ( r == 0 )
-                break;
-            add_to_buf( &contents, &contents_size, &contents_len, buf, r );
-	    }
-        (void) pclose( fp );
-	}
-    
-    buflen = snprintf( buf, sizeof(buf), "\
-                      </PRE>\n\
-                      <HR>\n\
-                      <ADDRESS><A HREF=\"%s\">%s</A></ADDRESS>\n\
-                      </BODY>\n\
-                      </HTML>\n",
-                      SERVER_URL, SERVER_SOFTWARE );
-    add_to_buf( &contents, &contents_size, &contents_len, buf, buflen );
-    
-    add_headers( 200, "Ok", "", "", "text/html; charset=%s", contents_len, sb.st_mtime );
-    if ( method != METHOD_HEAD )
-        add_to_response( contents, contents_len );
-    send_response();
+    close(listenfd);
 }
