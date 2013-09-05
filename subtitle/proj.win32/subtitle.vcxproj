@@ -97,11 +97,13 @@
     <ClCompile Include="..\simpletextsubtitle.cpp" />
     <ClCompile Include="..\stssegment.cpp" />
     <ClCompile Include="..\subtitle.cpp" />
+    <ClCompile Include="..\tinyxml2\tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\simpletextsubtitle.h" />
     <ClInclude Include="..\stssegment.h" />
     <ClInclude Include="..\subtitle.h" />
+    <ClInclude Include="..\tinyxml2\tinyxml2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

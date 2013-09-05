@@ -408,4 +408,6 @@ void ass_clear_fonts(ASS_Library *library);
  */
 long long ass_step_sub(ASS_Track *track, long long now, int movement);
 
+char* ass_remove_format_tag(char* src);
+
 #endif /* LIBASS_ASS_H */

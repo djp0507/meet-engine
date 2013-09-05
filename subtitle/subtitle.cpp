@@ -11,6 +11,24 @@ extern "C"
 {
 #include "libass/ass.h"
 };
+
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
+
+const char* path_find_extension(const char* path)
+{
+    if (!path) {
+        return NULL;
+    }
+
+    const char* pch = strrchr(path, '.');
+    if (!pch) {
+        return NULL;
+    }
+    return pch + 1;
+}
+
 // forward declared
 class CSubtitleManager;
 class CSimpleTextSubtitle;
@@ -41,6 +59,7 @@ public:
     virtual int  getSubtitleIndex(const char* fileName);
 
 protected:
+    bool loadPPSubtitle(const char* fileName);
     CSimpleTextSubtitle* getSelectedSimpleTextSubtitle()
     {
         if (mSelected >= 0 && mSelected < mSubtitles.size()) {
@@ -84,6 +103,17 @@ int  CSubtitleManager::getLanguageCount()
 
 bool CSubtitleManager::getLanguageName(int language, char* name)
 {
+    if (language < 0 || language >= mSubtitles.size()) {
+        return false;
+    }
+
+    const char* languageName = mSubtitles[language]->getLanguageName();
+    if (languageName) {
+        strncpy(name, languageName, 511);
+        name[511] = '\x0';
+        return true;
+    }
+
     return false;
 }
 
@@ -154,6 +184,11 @@ bool CSubtitleManager::loadSubtitle(const char* fileName, bool isMediaFile)
         }
     }
 
+    const char *extension = path_find_extension(fileName);
+    if (extension && strcasecmp(extension, "ppsrt") == 0) {
+        return loadPPSubtitle(fileName);
+    }
+    
     CSimpleTextSubtitle* subtitle = new CSimpleTextSubtitle(mAssLibrary);
     if (!subtitle->LoadFile(fileName)) {
         delete subtitle;
@@ -165,6 +200,32 @@ bool CSubtitleManager::loadSubtitle(const char* fileName, bool isMediaFile)
     mSubtitles.push_back(subtitle);
 
     return true;
+}
+
+bool CSubtitleManager::loadPPSubtitle(const char* fileName)
+{
+    tinyxml2::XMLDocument xmlDoc;
+    if (xmlDoc.LoadFile(fileName) != tinyxml2::XML_SUCCESS) {
+        return false;
+    }
+
+    tinyxml2::XMLElement* subEle = NULL;
+    if (xmlDoc.RootElement()) {
+        subEle = xmlDoc.RootElement()->FirstChildElement("sub");
+    }
+    while (subEle) 
+    {
+        CSimpleTextSubtitle* subtitle = new CSimpleTextSubtitle(mAssLibrary);
+        if (subtitle->ParseXMLNode(fileName, subEle)) {
+            subtitle->seekTo(0);
+            mSubtitles.push_back(subtitle);
+        } else {
+            delete subtitle;
+        }
+
+        subEle = subEle->NextSiblingElement("sub");
+    }
+    return (mSubtitles.size() != 0);
 }
 
 int  CSubtitleManager::getSubtitleIndex(const char* fileName)
@@ -205,7 +266,7 @@ int main(int argc, char* argv[])
     if (!ISubtitles::create(&subtitle)) {
         return 0;
     }
-    subtitle->loadSubtitle("drawmode.ass", false);
+    subtitle->loadSubtitle("Universal Soldier Day of Reckoning 2012 UNCUT 1080p BluRay DTS x264-ENCOUNTERS.ass", false);
     subtitle->seekTo(0);
 
     STSSegment* segment = NULL;

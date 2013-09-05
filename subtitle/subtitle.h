@@ -164,6 +164,7 @@ public:
      * @param[in] fileName     字幕文件路径
      * @param[in] isMediaFile  文件是否媒体文件,如果为true,使用ffmpeg解出内嵌字幕,
      *                         并且尝试加载同目录下的同名的字幕文件
+     * remark: 支持PPTV私有字幕格式,后缀名为ppsrt
     */
     virtual bool loadSubtitle(const char* fileName, bool isMediaFile) = 0;
 

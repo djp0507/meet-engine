@@ -29,6 +29,10 @@ CSimpleTextSubtitle::~CSimpleTextSubtitle()
         free((void*)mFileName);
         mFileName = NULL;
     }
+    if (mLanguageName) {
+        free((void*)mLanguageName);
+        mLanguageName = NULL;
+    }
 }
 
 bool CSimpleTextSubtitle::LoadFile(const char* fileName)
@@ -36,14 +40,80 @@ bool CSimpleTextSubtitle::LoadFile(const char* fileName)
     if (!mAssLibrary) {
         return false;
     }
-    mAssTrack = ass_read_file(mAssLibrary, const_cast<char*>(fileName), "enca:zh:utf-8");
-    if (!mAssTrack) {
+    ASS_Track* track = ass_read_file(mAssLibrary, const_cast<char*>(fileName), "enca:zh:utf-8");
+    if (!track) {
         return false;
     }
 
+    if (!ArrangeTrack(track)) {
+        ass_free_track(track);
+        return false;
+    }
+    mAssTrack = track;
+    mFileName = strdup(fileName);
+
+    return true;
+}
+
+/*
+ * 分析pptv私有字幕格式
+ * 文档: http://sharepoint/tech/mediapipelinedivision/SitePages/sub.aspx
+ */
+bool CSimpleTextSubtitle::ParseXMLNode(const char* fileName, tinyxml2::XMLElement* element)
+{
+    if (element->Attribute("title")) {
+        mLanguageName = strdup(element->Attribute("title"));
+    }
+
+    ASS_Track* track = ass_new_track(mAssLibrary);
+    tinyxml2::XMLElement* child = element->FirstChildElement("item");
+    while(child) 
+    {
+        tinyxml2::XMLElement* stEle  = child->FirstChildElement("st");
+        tinyxml2::XMLElement* etEle  = child->FirstChildElement("et");
+        tinyxml2::XMLElement* subEle = child->FirstChildElement("sub");
+        if (stEle && etEle && subEle) {
+            unsigned int st, et;
+            const char *sub;
+            if (stEle->QueryUnsignedText(&st) == tinyxml2::XML_SUCCESS
+                && etEle->QueryUnsignedText(&et) == tinyxml2::XML_SUCCESS
+                && et > st
+                && (sub = subEle->GetText()) != NULL) {
+                    int eid;
+                    ASS_Event *event;
+
+                    eid = ass_alloc_event(track);
+                    event = track->events + eid;
+
+                    event->Start = st;
+                    event->Duration = et - st;
+                    event->Text = ass_remove_format_tag(strdup(sub));
+
+                    if (strlen(event->Text) == 0) {
+                        ass_free_event(track, eid);
+                        track->n_events--;
+                    }
+            }
+        }
+
+        child = child->NextSiblingElement("item");
+    }
+
+    if (!ArrangeTrack(track)) {
+        ass_free_track(track);
+        return false;
+    }
+    mAssTrack = track;
+    mFileName = strdup(fileName);
+
+    return true;
+}
+
+bool CSimpleTextSubtitle::ArrangeTrack(ASS_Track* track)
+{
     std::set<int64_t> breakpoints;
-    for (int i = 0; i < mAssTrack->n_events; ++i) {
-        ASS_Event* event = &mAssTrack->events[i];
+    for (int i = 0; i < track->n_events; ++i) {
+        ASS_Event* event = &track->events[i];
         int64_t startTime = event->Start;
         int64_t stopTime  = event->Start + event->Duration;
 
@@ -63,8 +133,8 @@ bool CSimpleTextSubtitle::LoadFile(const char* fileName)
         prev = *itr;
     }
 
-    for (int i = 0; i < mAssTrack->n_events; ++i) {
-        ASS_Event* event = &mAssTrack->events[i];
+    for (int i = 0; i < track->n_events; ++i) {
+        ASS_Event* event = &track->events[i];
         int64_t startTime = event->Start;
         int64_t stopTime  = event->Start + event->Duration;
 
@@ -74,7 +144,7 @@ bool CSimpleTextSubtitle::LoadFile(const char* fileName)
         for (; j < mSegments.size() && mSegments[j]->mStopTime <= stopTime; ++j) {
             CSTSSegment* s = mSegments[j];
             for (int l = 0, m = s->mSubs.size(); l <= m; l++) {
-                if (l == m || event->ReadOrder < mAssTrack->events[s->mSubs[l]].ReadOrder) {
+                if (l == m || event->ReadOrder < track->events[s->mSubs[l]].ReadOrder) {
                     s->mSubs.insert(s->mSubs.begin() + l, i);
                     break;
                 }
@@ -90,9 +160,6 @@ bool CSimpleTextSubtitle::LoadFile(const char* fileName)
             delete p;
         }
     }
-
-    mFileName = strdup(fileName);
-
     return true;
 }
 
@@ -125,7 +192,7 @@ bool CSimpleTextSubtitle::getNextSubtitleSegment(STSSegment** segment)
 
 ASS_Event* CSimpleTextSubtitle::getEventAt(int pos)
 {
-    if (pos >= 0 && pos < mAssTrack->n_events) {
+    if (mAssTrack && pos >= 0 && pos < mAssTrack->n_events) {
         return &mAssTrack->events[pos];
     }
     return NULL;

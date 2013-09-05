@@ -1,7 +1,7 @@
 include $(PLATFORM).mk
 
 CFLAGS := $(CFLAGS) -Wall -I./libass -Wno-write-strings
-CPPFLAGS := $(CPPFLAGS) -Wall -I./libass -Wno-write-strings
+CPPFLAGS := $(CPPFLAGS) -Wall -I./libass -I./tinyxml2 -Wno-write-strings
 
 ifeq ($(DEBUG), y)
 CFLAGS += -g
@@ -25,7 +25,7 @@ else
 target = ./output/ios/libsubtitle.a
 endif
 
-CPPSOURCES = $(wildcard *.cpp)
+CPPSOURCES = $(wildcard *.cpp) $(wildcard tinyxml2/*.cpp) 
 CPPOBJS := $(subst .cpp,.o,$(CPPSOURCES))
 
 CSOURCES = $(wildcard *.c)
