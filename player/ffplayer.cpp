@@ -2589,9 +2589,9 @@ bool getAudioLanguages(const char** lang, int32_t index, AVStream* stream)
         AVDictionaryEntry* elem = av_dict_get(stream->metadata, "language", NULL, 0);
         if(elem != NULL)
         {
-            lang[index] = elem->value;
-            if(lang[index] != NULL)
+            if(elem->value != NULL)
             {
+                strncpy(lang[index], elem->value, LANGCODE_LEN);
                 LOGI("audio index:%d -> language:%s", index, lang[index]);
                 return true;
             }
@@ -2650,7 +2650,7 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
                         	if (codec != NULL)
                             {
                                 info->audio_name = codec->name;
-                                getAudioLanguages(info->audio_languages, i, stream);
+                                getAudioLanguages((char**)info->audio_languages, i, stream);
                             }
                         }
                     }

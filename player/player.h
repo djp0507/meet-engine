@@ -4,6 +4,7 @@
 #include "errors.h"
 
 #define CHANNELS_MAX 100
+#define LANGCODE_LEN 4
 
 //视频媒体信息
 typedef struct MediaInfo {
@@ -29,7 +30,7 @@ typedef struct MediaInfo {
 	//	zho:chinese
 	//	chs:simplified chinese
 	//	cht:tranditional chinese
-	const char* audio_languages[CHANNELS_MAX];
+	const char audio_languages[CHANNELS_MAX][LANGCODE_LEN];
 
 	//all channels count, include audio / video /subtitle
 	int32_t channels;
