@@ -30,7 +30,7 @@ typedef struct MediaInfo {
 	//	zho:chinese
 	//	chs:simplified chinese
 	//	cht:tranditional chinese
-	const char audio_languages[CHANNELS_MAX][LANGCODE_LEN];
+	char audio_languages[CHANNELS_MAX][LANGCODE_LEN];
 
 	//all channels count, include audio / video /subtitle
 	int32_t channels;

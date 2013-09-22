@@ -2582,17 +2582,17 @@ bool generateThumbnail(AVFrame* videoFrame,
     return result;
 }
 
-bool getAudioLanguages(const char** lang, int32_t index, AVStream* stream)
+bool getAudioLanguages(char* lang, int index, AVStream* stream)
 {
-    if(index < CHANNELS_MAX && stream != NULL && stream->metadata != NULL)
+    if(stream != NULL && stream->metadata != NULL)
     {
         AVDictionaryEntry* elem = av_dict_get(stream->metadata, "language", NULL, 0);
         if(elem != NULL)
         {
             if(elem->value != NULL)
             {
-                strncpy(lang[index], elem->value, LANGCODE_LEN);
-                LOGI("audio index:%d -> language:%s", index, lang[index]);
+                strncpy(lang, elem->value, LANGCODE_LEN);
+                LOGI("audio index:%d -> language:%s", index, lang);
                 return true;
             }
         }
@@ -2631,7 +2631,7 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
             LOGD("streamsCount:%d", streamsCount);
             
             info->channels = streamsCount;
-            memset(info->audio_languages, 0, CHANNELS_MAX);
+            memset((void*)info->audio_languages, 0, CHANNELS_MAX*LANGCODE_LEN);
 
             info->audio_channels = 0;
             info->video_channels = 0;
@@ -2650,7 +2650,7 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
                         	if (codec != NULL)
                             {
                                 info->audio_name = codec->name;
-                                getAudioLanguages((char**)info->audio_languages, i, stream);
+                                getAudioLanguages((char*)(info->audio_languages)+i*LANGCODE_LEN, i, stream);
                             }
                         }
                     }
