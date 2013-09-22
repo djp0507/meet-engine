@@ -873,6 +873,7 @@ void FFPlayer::onPrepare()
 
 	// Open stream
 	mDataStream = new FFStream();
+    mDataStream->selectAudioChannel(mAudioChannelSelected);
     mDataStream->setListener(this);
     mMovieFile = mDataStream->open(mUri);
     if(mMovieFile == NULL)
