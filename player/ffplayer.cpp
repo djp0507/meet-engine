@@ -2583,22 +2583,27 @@ bool generateThumbnail(AVFrame* videoFrame,
     return result;
 }
 
-bool getAudioLanguages(char* lang, int index, AVStream* stream)
+bool getAudioLanguages(char* langcode, char* langtitle, int index, AVStream* stream)
 {
-    if(stream != NULL && stream->metadata != NULL)
+    bool gotlanguage = false;
+    if(langcode != NULL && langtitle != NULL && stream != NULL && stream->metadata != NULL)
     {
-        AVDictionaryEntry* elem = av_dict_get(stream->metadata, "language", NULL, 0);
-        if(elem != NULL)
+        AVDictionaryEntry* codeelem = av_dict_get(stream->metadata, "language", NULL, 0);
+        if(codeelem != NULL && codeelem->value != NULL)
         {
-            if(elem->value != NULL)
-            {
-                strncpy(lang, elem->value, LANGCODE_LEN);
-                LOGI("audio index:%d -> language:%s", index, lang);
-                return true;
-            }
+            strncpy(langcode, codeelem->value, LANGCODE_LEN);
+            LOGI("audio index:%d -> languagecode:%s", index, langcode);
+            gotlanguage = true;
+        }
+        AVDictionaryEntry* titleelem = av_dict_get(stream->metadata, "title", NULL, 0);
+        if(titleelem != NULL && titleelem->value != NULL)
+        {
+            strncpy(langtitle, titleelem->value, LANGTITLE_LEN);
+            LOGI("audio index:%d -> langugaetitle:%s", index, langtitle);
+            gotlanguage = true;
         }
     }
-    return false;
+    return gotlanguage;
 }
 
 bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
@@ -2633,6 +2638,7 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
             
             info->channels = streamsCount;
             memset((void*)info->audio_languages, 0, CHANNELS_MAX*LANGCODE_LEN);
+            memset((void*)info->audio_titles, 0, CHANNELS_MAX*LANGTITLE_LEN);
 
             info->audio_channels = 0;
             info->video_channels = 0;
@@ -2651,7 +2657,10 @@ bool FFPlayer::getMediaDetailInfo(const char* url, MediaInfo* info)
                         	if (codec != NULL)
                             {
                                 info->audio_name = codec->name;
-                                getAudioLanguages((char*)(info->audio_languages)+i*LANGCODE_LEN, i, stream);
+                                getAudioLanguages((char*)(info->audio_languages)+i*LANGCODE_LEN, 
+                                    (char*)(info->audio_titles)+i*LANGTITLE_LEN, 
+                                    i,
+                                    stream);
                             }
                         }
                     }

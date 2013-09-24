@@ -5,6 +5,7 @@
 
 #define CHANNELS_MAX 100
 #define LANGCODE_LEN 4
+#define LANGTITLE_LEN 20
 
 //视频媒体信息
 typedef struct MediaInfo {
@@ -31,6 +32,7 @@ typedef struct MediaInfo {
 	//	chs:simplified chinese
 	//	cht:tranditional chinese
 	char audio_languages[CHANNELS_MAX][LANGCODE_LEN];
+	char audio_titles[CHANNELS_MAX][LANGTITLE_LEN];
 
 	//all channels count, include audio / video /subtitle
 	int32_t channels;
