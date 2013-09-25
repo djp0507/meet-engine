@@ -317,6 +317,7 @@ int32_t AudioTrack_write(void *buffer, uint32_t buffer_size)
                 return buffer_size;
             }
             usleep(1000ll);//1ms
+            alGetSourcei(alContext.source, AL_SOURCE_STATE, &state);
         }
     }
     
