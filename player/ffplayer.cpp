@@ -410,13 +410,24 @@ private:
     void adjust()
     {
 #ifdef OS_ANDROID
-        if(mSurfaceWidth <= 480)
+        if(!strncmp(platformInfo->model_name, "SM-N9006", strlen("SM-N9006")))
         {
-            mOptiSurfaceWidth = ((mFrameWidth-1)&0xFFC0);//+64;
+            if(mFrameWidth != 720)
+            {
+                mOptiSurfaceWidth = mFrameWidth&0xFF80;
+            }
+            else
+            {
+                mOptiSurfaceWidth = mFrameWidth&0xFFE0;
+            }
+        }
+        else if(mSurfaceWidth <= 480)
+        {
+            mOptiSurfaceWidth = mFrameWidth&0xFFC0;//+64;
         }
         else
         {
-            mOptiSurfaceWidth = ((mFrameWidth-1)&0xFFE0);//+32;
+            mOptiSurfaceWidth = mFrameWidth&0xFFE0;//+32;
         }
         //height does not need round.
         mOptiSurfaceHeight = mFrameHeight;
@@ -612,6 +623,7 @@ FFPlayer::~FFPlayer()
     pthread_mutex_destroy(&mLock);
     pthread_cond_destroy(&mPreparedCondition);
     avformat_network_deinit();
+	LOGD("FFPlayer destructor end");
 }
 
 void FFPlayer::cancelPlayerEvents_l()
@@ -2263,7 +2275,7 @@ void FFPlayer::optimizeDecode_l(AVPacket* packet)
 int64_t FFPlayer::getFramePTS_l(AVFrame* frame)
 {
     int64_t pts = 0;
-    if(av_frame_get_best_effort_timestamp(mVideoFrame) != AV_NOPTS_VALUE)
+    if(av_frame_get_best_effort_timestamp(frame) != AV_NOPTS_VALUE)
     {
         LOGV("use av_frame_get_best_effort_timestamp");
         pts = av_frame_get_best_effort_timestamp(frame);

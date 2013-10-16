@@ -77,8 +77,8 @@ public:
         mChannelLayoutOutput = mChannelLayout;
         mChannelsOutput = mChannels;
     
-        if((mSampleFormatOutput < AV_SAMPLE_FMT_U8 ||
-            mSampleFormatOutput > AV_SAMPLE_FMT_S16) ||
+        if(mSampleFormatOutput < AV_SAMPLE_FMT_U8 ||
+            mSampleFormatOutput > AV_SAMPLE_FMT_S16 ||
             mSampleRateOutput < 4000 ||
             mSampleRateOutput > 48000 ||
             mChannelsOutput > mDeviceChannels ||
@@ -198,6 +198,7 @@ public:
             else
             {
                 LOGE("Audio convert %d -> 1 failed", mSampleFormat);
+                return ERROR;
             }
             int64_t end_decode = getNowMs();
         	LOGD("convert audio cost %lld[ms]", (end_decode-begin_decode));
