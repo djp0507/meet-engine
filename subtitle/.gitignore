@@ -9,10 +9,7 @@ libiconv/libcharset/lib/localcharset.o
 libiconv/libcharset/lib/relocatable.o
 libiconv/libcharset/libcharset.a
 libiconv/libiconv.a
-output/android/libass.a
-output/android/libcharset.a
-output/android/libenca.a
-output/android/libiconv.a
+output/
 simpletextsubtitle.o
 stssegment.o
 subtitle.o
