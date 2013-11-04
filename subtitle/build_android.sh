@@ -15,6 +15,9 @@ case `uname -sm` in
 	MINGW*)
 		HOST_TAG="windows"
 		;;
+	Darwin\ x86_64)
+		HOST_TAG="darwin-x86_64"
+		;;
 	*)
 		echo "Unkown Platform: `uname -sm`"
 		exit -1
